@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三AI对战俄罗斯方块</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>三AI对战俄罗斯方块</h1>
+            <div class="controls">
+                <button id="startBtn" class="btn">开始游戏</button>
+                <button id="stopBtn" class="btn" disabled>停止</button>
+            </div>
+            <div class="status">
+                <span id="gameStatus">等待开始</span>
+            </div>
+        </header>
+
+        <main class="game-container">
+            <div class="player" id="player0">
+                <h2>玩家 0</h2>
+                <canvas class="board" width="200" height="400" data-player="0"></canvas>
+                <div class="info">
+                    <span>分数: <span class="score">0</span></span>
+                    <span>状态: <span class="status-text">等待</span></span>
+                </div>
+            </div>
+
+            <div class="player" id="player1">
+                <h2>玩家 1</h2>
+                <canvas class="board" width="200" height="400" data-player="1"></canvas>
+                <div class="info">
+                    <span>分数: <span class="score">0</span></span>
+                    <span>状态: <span class="status-text">等待</span></span>
+                </div>
+            </div>
+
+            <div class="player" id="player2">
+                <h2>玩家 2</h2>
+                <canvas class="board" width="200" height="400" data-player="2"></canvas>
+                <div class="info">
+                    <span>分数: <span class="score">0</span></span>
+                    <span>状态: <span class="status-text">等待</span></span>
+                </div>
+            </div>
+        </main>
+
+        <div id="gameOverModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>游戏结束</h2>
+                <p>获胜者: <span id="winner">-</span></p>
+                <p>最终分数:</p>
+                <ul id="finalScores"></ul>
+                <button id="restartBtn" class="btn">再来一局</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/websocket.js"></script>
+    <script src="js/game-renderer.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -20,9 +20,128 @@
     let canvases = [];
     let scoreElements = [];
     let statusElements = [];
+    let bgMusic = null;
+    let isMusicPlaying = false;
+
+    // 初始化背景音乐（使用 Web Audio API 合成，无需外部文件）
+    function initMusic() {
+        if (!window.AudioContext && !window.webkitAudioContext) return;
+        
+        window.bgAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let isPlaying = false;
+        
+        // 简单的俄罗斯方块风格音乐
+        const melody = [
+            { note: 220, duration: 0.2 },  // A3
+            { note: 0, duration: 0.1 },    // pause
+            { note: 262, duration: 0.2 },  // C4
+            { note: 0, duration: 0.1 },
+            { note: 294, duration: 0.2 },  // D4
+            { note: 0, duration: 0.1 },
+            { note: 262, duration: 0.2 },  // C4
+            { note: 0, duration: 0.1 },
+            { note: 220, duration: 0.2 },  // A3
+            { note: 0, duration: 0.1 },
+            { note: 196, duration: 0.4 },  // G3
+            { note: 0, duration: 0.3 },
+            { note: 220, duration: 0.2 },  // A3
+            { note: 0, duration: 0.1 },
+            { note: 262, duration: 0.2 },  // C4
+            { note: 0, duration: 0.1 },
+            { note: 294, duration: 0.2 },  // D4
+            { note: 0, duration: 0.1 },
+            { note: 330, duration: 0.4 },  // E4
+            { note: 0, duration: 0.3 },
+            { note: 294, duration: 0.2 },  // D4
+            { note: 0, duration: 0.1 },
+            { note: 262, duration: 0.2 },  // C4
+            { note: 0, duration: 0.1 },
+            { note: 220, duration: 0.2 },  // A3
+            { note: 0, duration: 0.1 },
+            { note: 196, duration: 0.4 },  // G3
+            { note: 0, duration: 0.5 },
+        ];
+
+        function playNote(frequency, duration, startTime) {
+            if (frequency === 0) return;
+
+            const oscillator = window.bgAudioCtx.createOscillator();
+            const gainNode = window.bgAudioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(window.bgAudioCtx.destination);
+
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequency;
+
+            gainNode.gain.setValueAtTime(0.15, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        }
+
+        function playMelody() {
+            if (!isPlaying) return;
+
+            let startTime = window.bgAudioCtx.currentTime;
+            melody.forEach(({ note, duration }) => {
+                playNote(note, duration, startTime);
+                startTime += duration;
+            });
+
+            setTimeout(playMelody, (startTime - window.bgAudioCtx.currentTime) * 1000);
+        }
+
+        // 创建一个可控制的音乐对象
+        bgMusic = {
+            play: function() {
+                if (window.bgAudioCtx.state === 'suspended') {
+                    window.bgAudioCtx.resume();
+                }
+                isPlaying = true;
+                playMelody();
+            },
+            pause: function() {
+                isPlaying = false;
+            },
+            stop: function() {
+                isPlaying = false;
+            }
+        };
+    }
+
+    function playMusic() {
+        if (bgMusic && !isMusicPlaying) {
+            try {
+                bgMusic.play();
+                isMusicPlaying = true;
+            } catch (e) {
+                console.log('播放音乐失败:', e);
+            }
+        }
+    }
+
+    function stopMusic() {
+        if (bgMusic && isMusicPlaying) {
+            try {
+                if (bgMusic.pause) {
+                    bgMusic.pause();
+                } else {
+                    bgMusic.stop();
+                }
+                isMusicPlaying = false;
+            } catch (e) {
+                console.log('停止音乐失败:', e);
+            }
+        }
+    }
 
     // 初始化
     function init() {
+        // 初始化背景音乐
+        initMusic();
+        
         // 创建渲染器
         renderer = new GameRenderer();
 
@@ -48,15 +167,20 @@
         ws.on('onError', onError);
 
         // 绑定按钮事件
-        startBtn.addEventListener('click', () => ws.startGame());
+        startBtn.addEventListener('click', () => {
+            playMusic();  // 用户点击后播放音乐
+            ws.startGame();
+        });
         stopBtn.addEventListener('click', () => {
             // 停止游戏
             stopBtn.disabled = true;
             startBtn.disabled = false;
             gameStatus.textContent = '已停止';
+            stopMusic();  // 停止音乐
         });
         restartBtn.addEventListener('click', () => {
             gameOverModal.classList.add('hidden');
+            playMusic();  // 重新开始播放音乐
             ws.startGame();
         });
 

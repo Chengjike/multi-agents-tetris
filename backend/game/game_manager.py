@@ -1,13 +1,14 @@
 """
 游戏管理器
 
-管理多个游戏实例、主循环和惩罚
+管理多个游戏实例、主循环和惩罚、通信
 """
 import asyncio
 from typing import List, Dict, Any, Optional
 from backend.game.tetris import TetrisGame, GameStatus, PlayerAction
 from backend.game.punishment import PunishmentManager
 from backend.agents.rule_agent import RuleAgent
+from backend.agents.communication import MessageChannel, Message
 from backend.protocol.messages import create_game_state, create_game_over
 
 
@@ -34,6 +35,12 @@ class GameManager:
 
         # 惩罚管理器
         self.punishment_manager = PunishmentManager(num_players)
+        
+        # 通信通道
+        self.message_channel = MessageChannel(num_players=num_players)
+        
+        # 游戏反思记录
+        self.reflections: Dict[int, str] = {}
 
         # 游戏状态
         self.game_status = GameStatus.WAITING
@@ -146,3 +153,89 @@ class GameManager:
         """运行游戏（异步）"""
         self.start_game()
         await self.game_loop()
+    
+    # ========== 通信功能 ==========
+    
+    def broadcast_message(
+        self,
+        sender_id: int,
+        content: str
+    ) -> bool:
+        """
+        广播消息给所有其他玩家
+        
+        Args:
+            sender_id: 发送者 ID
+            content: 消息内容
+            
+        Returns:
+            是否发送成功
+        """
+        from backend.agents.communication import Message, MessageType
+        
+        msg = Message(
+            sender_id=sender_id,
+            receiver_id=None,  # 广播
+            message_type=MessageType.INFO,
+            content=content
+        )
+        
+        return self.message_channel.send_message(msg)
+    
+    def get_player_messages(
+        self,
+        player_id: int,
+        count: int = 10
+    ) -> List[Message]:
+        """
+        获取玩家收到的消息
+        
+        Args:
+            player_id: 玩家 ID
+            count: 消息数量
+            
+        Returns:
+            消息列表
+        """
+        return self.message_channel.get_recent_messages(player_id, count)
+    
+    # ========== 反思功能 ==========
+    
+    async def trigger_reflections(
+        self,
+        agent_reflection_method: callable
+    ) -> Dict[int, str]:
+        """
+        触发所有存活玩家的反思生成
+        
+        Args:
+            agent_reflection_method: 回调方法，签名为 async fn(player_id, game) -> str
+            
+        Returns:
+            玩家ID到反思内容的映射
+        """
+        for i, game in enumerate(self.games):
+            if game.status != GameStatus.GAME_OVER:
+                try:
+                    reflection = await agent_reflection_method(i, game)
+                    self.reflections[i] = reflection
+                except Exception:
+                    self.reflections[i] = "反思生成失败"
+        
+        return self.reflections
+    
+    def get_reflection(self, player_id: int) -> Optional[str]:
+        """
+        获取玩家反思
+        
+        Args:
+            player_id: 玩家 ID
+            
+        Returns:
+            反思内容，如果不存在则返回 None
+        """
+        return self.reflections.get(player_id)
+    
+    def get_all_reflections(self) -> Dict[int, str]:
+        """获取所有玩家反思"""
+        return self.reflections.copy()

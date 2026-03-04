@@ -16,7 +16,7 @@ class TestPortIsolation:
     def test_default_ports_do_not_conflict(self):
         """测试默认端口不与 3000 冲突"""
         # 新服务的默认端口
-        NEW_SERVICE_PORT = 8080
+        NEW_SERVICE_PORT = 8766
         EXISTING_SERVICE_PORT = 3000
 
         assert NEW_SERVICE_PORT != EXISTING_SERVICE_PORT
@@ -205,8 +205,8 @@ class TestDeploymentReadiness:
             with open(nginx_conf_path, 'r') as f:
                 content = f.read()
 
-            # nginx 应该将请求转发到 8080
-            assert '8080' in content
-            print("✅ nginx 配置正确指向 8080 端口")
+            # nginx 应该将请求转发到 8766
+            assert '8766' in content
+            print("✅ nginx 配置正确指向 8766 端口")
         else:
             pytest.skip("nginx.conf 不存在")

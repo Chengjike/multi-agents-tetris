@@ -79,6 +79,10 @@ app = FastAPI(title="Multi-Agents Tetris API", lifespan=lifespan)
 
 # ========== REST API 端点 ==========
 
+# 默认端口配置
+DEFAULT_PORT = 8766  # 使用 8766 避免与现有服务冲突
+
+
 def get_game_manager() -> GameManager:
     """获取游戏管理器（如果不存在则创建）"""
     global _game_manager

@@ -14,6 +14,9 @@ class GameRenderer {
             'Z': '#ff0000',
             'filled': '#444',
         };
+        // 闪烁效果相关
+        this.flashLines = []; // 要闪烁消除的行
+        this.flashCount = {}; // 每行的闪烁计数
     }
 
     render(canvas, gameState) {
@@ -25,18 +28,29 @@ class GameRenderer {
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 绘制棋盘
+        // 绘制棋盘（处理闪烁效果）
         if (board) {
             for (let y = 0; y < board.length; y++) {
-                for (let x = 0; x < board[y].length; x++) {
-                    if (board[y][x]) {
-                        this._drawCell(ctx, x, y, '#444');
+                // 检查这行是否需要闪烁
+                if (this.flashLines.includes(y)) {
+                    // 闪烁效果：交替显示白色和原色
+                    const flashOn = Math.floor(this.flashCount[y] / 5) % 2 === 0;
+                    for (let x = 0; x < board[y].length; x++) {
+                        if (board[y][x]) {
+                            this._drawCell(ctx, x, y, flashOn ? '#ffffff' : '#444', true);
+                        }
+                    }
+                } else {
+                    for (let x = 0; x < board[y].length; x++) {
+                        if (board[y][x]) {
+                            this._drawCell(ctx, x, y, '#444', false);
+                        }
                     }
                 }
             }
         }
 
-        // 绘制当前方块
+        // 绘制当前方块（带3D效果）
         if (currentPiece && currentPiece.type) {
             const pieceType = currentPiece.type;
             const color = this.colors[pieceType] || '#fff';
@@ -46,7 +60,7 @@ class GameRenderer {
 
             const cells = this._getPieceCells(pieceType, rotation);
             cells.forEach(([dx, dy]) => {
-                this._drawCell(ctx, x + dx, y + dy, color);
+                this._drawCell3D(ctx, x + dx, y + dy, color);
             });
         }
 
@@ -54,17 +68,83 @@ class GameRenderer {
         this._drawGrid(ctx, canvas.width, canvas.height);
     }
 
-    _drawCell(ctx, x, y, color) {
+    // 3D 效果的单元格绘制
+    _drawCell3D(ctx, x, y, color) {
+        const px = x * this.cellSize;
+        const py = y * this.cellSize;
+        const size = this.cellSize - 1;
+        
+        // 主体颜色
+        ctx.fillStyle = color;
+        ctx.fillRect(px, py, size, size);
+        
+        // 顶部高光（左上角）
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.beginPath();
+        ctx.moveTo(px, py + size);
+        ctx.lineTo(px, py);
+        ctx.lineTo(px + size, py);
+        ctx.lineTo(px + size - 3, py + 3);
+        ctx.lineTo(px + 3, py + 3);
+        ctx.lineTo(px, py + size);
+        ctx.fill();
+        
+        // 右侧阴影（右下角）
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.moveTo(px + size, py);
+        ctx.lineTo(px + size, py + size);
+        ctx.lineTo(px, py + size);
+        ctx.lineTo(px + 3, py + size - 3);
+        ctx.lineTo(px + 3, py + 3);
+        ctx.lineTo(px + size - 3, py + 3);
+        ctx.fill();
+        
+        // 底部暗面
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(px + 3, py + size - 3, size - 3, 3);
+    }
+
+    _drawCell(ctx, x, y, color, isFlashing = false) {
         const px = x * this.cellSize;
         const py = y * this.cellSize;
 
         ctx.fillStyle = color;
         ctx.fillRect(px, py, this.cellSize - 1, this.cellSize - 1);
 
-        // 添加高光效果
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(px, py, this.cellSize - 1, 2);
-        ctx.fillRect(px, py, 2, this.cellSize - 1);
+        if (!isFlashing) {
+            // 添加高光效果
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(px, py, this.cellSize - 1, 2);
+            ctx.fillRect(px, py, 2, this.cellSize - 1);
+            
+            // 添加简单的3D阴影
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(px + this.cellSize - 3, py + 2, 2, this.cellSize - 3);
+            ctx.fillRect(px + 2, py + this.cellSize - 3, this.cellSize - 3, 2);
+        }
+    }
+
+    // 设置闪烁行（消除前闪烁）
+    setFlashLines(lines) {
+        this.flashLines = lines;
+        this.flashCount = {};
+        lines.forEach(line => {
+            this.flashCount[line] = 0;
+        });
+    }
+
+    // 更新闪烁计数
+    updateFlash() {
+        this.flashLines.forEach(line => {
+            this.flashCount[line]++;
+        });
+    }
+
+    // 清除闪烁
+    clearFlash() {
+        this.flashLines = [];
+        this.flashCount = {};
     }
 
     _drawGrid(ctx, width, height) {

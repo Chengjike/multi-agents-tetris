@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    <script src="js/http-client.js"></script>
+    <script src="js/websocket.js"></script>
     <script src="js/game-renderer.js"></script>
     <script src="js/main.js"></script>
 </body>

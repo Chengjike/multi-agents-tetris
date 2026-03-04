@@ -2,10 +2,6 @@
  * 主程序
  */
 (function() {
-    // 配置 - WebSocket 固定连接 8765 端口
-    const hostname = window.location.hostname || 'localhost';
-    const WS_URL = `ws://${hostname}:8765/ws`;
-
     // DOM 元素
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -15,8 +11,8 @@
     const winnerSpan = document.getElementById('winner');
     const finalScoresList = document.getElementById('finalScores');
 
-    // 游戏组件
-    let ws = null;
+    // 游戏组件 - 使用 HTTP + SSE 客户端
+    let client = null;
     let renderer = null;
     let canvases = [];
     let scoreElements = [];
@@ -157,22 +153,24 @@
             statusElements[index] = el.querySelector('.status-text');
         });
 
-        // 创建 WebSocket 连接
-        ws = new TetrisWebSocket(WS_URL);
+        // 创建 HTTP + SSE 客户端
+        client = new TetrisHTTPClient();
 
         // 设置事件处理
-        ws.on('onConnect', onConnect);
-        ws.on('onDisconnect', onDisconnect);
-        ws.on('onGameState', onGameState);
-        ws.on('onGameOver', onGameOver);
-        ws.on('onError', onError);
+        client.on('onConnect', onConnect);
+        client.on('onDisconnect', onDisconnect);
+        client.on('onGameState', onGameState);
+        client.on('onGameOver', onGameOver);
+        client.on('onError', onError);
 
         // 绑定按钮事件
         startBtn.addEventListener('click', () => {
             playMusic();  // 用户点击后播放音乐
-            ws.startGame();
+            client.startGame();
         });
         stopBtn.addEventListener('click', () => {
+            // 发送停止消息到服务器
+            client.stopGame();
             // 停止游戏
             stopBtn.disabled = true;
             startBtn.disabled = false;
@@ -182,17 +180,17 @@
         restartBtn.addEventListener('click', () => {
             gameOverModal.classList.add('hidden');
             playMusic();  // 重新开始播放音乐
-            ws.startGame();
+            client.startGame();
         });
 
         // 尝试连接
         connect();
     }
 
-    async function connect() {
+    function connect() {
         try {
-            await ws.connect();
-            console.log('Connected to server');
+            client.connectSSE();
+            console.log('Connected to server via SSE');
         } catch (e) {
             console.error('Failed to connect:', e);
             setTimeout(connect, 3000); // 3秒后重试
@@ -220,6 +218,9 @@
         statusEl.textContent = connected ? '已连接' : '断开连接';
     }
 
+    // 追踪每个玩家的行数，用于检测消除
+    const prevLinesCleared = [0, 0, 0];
+
     function onGameState(data) {
         // 更新游戏状态显示
         gameStatus.textContent = '游戏中 (Tick: ' + (data.tick || 0) + ')';
@@ -230,6 +231,18 @@
 
         // 渲染每个玩家
         data.players.forEach((player, index) => {
+            // 检测是否有行消除（通过 lines_cleared 增加）
+            const currentLines = player.lines_cleared || 0;
+            if (currentLines > prevLinesCleared[index]) {
+                // 触发闪烁效果（所有行闪烁）
+                renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19]);
+                // 300ms 后清除闪烁
+                setTimeout(() => renderer.clearFlash(), 300);
+                setTimeout(() => renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19]), 350);
+                setTimeout(() => renderer.clearFlash(), 650);
+            }
+            prevLinesCleared[index] = currentLines;
+            
             const canvas = canvases[index];
             if (canvas) {
                 renderer.render(canvas, player);

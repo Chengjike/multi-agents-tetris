@@ -1,27 +1,90 @@
-# 项目需求：三AI对战俄罗斯方块（Web版）
+# 三AI对战俄罗斯方块
 
 ## 项目概述
-开发一个网页游戏，实现三个AI Agent各自控制一个俄罗斯方块实例进行对战。核心规则：当任意玩家一次消除4行时，立即在其他两个玩家的板子最底部随机增加一行障碍（留一个缺口）。最终根据存活时间或得分判定胜负。
 
-## 核心需求
-- **前端**：浏览器页面，并排显示三个独立的俄罗斯方块游戏区域（20x10板子），实时更新板子、当前块、分数、游戏状态。
-- **后端**：运行在ECS上的服务，包含：
-  - 三个独立的游戏实例（标准俄罗斯方块规则）。
-  - 三个AI Agent，每个独立决策动作（左、右、旋转、硬降、软降、无操作），并维护自己的对话历史。
-  - 游戏主循环：同步三个实例，处理Agent动作、自动下落、消除行，并在消除每累计消除4行时触发惩罚（向另两个板子底部插入一行随机缺口的障碍，板子上移）。
-  - WebSocket服务：向前端推送实时游戏状态（三个板子的数据、分数等）。
-- **公平性**：需设计机制避免因网络延迟导致的不公平（如固定决策周期、统一超时、确定性动作应用顺序）。
+网页游戏，三个 AI Agent 各自控制一个俄罗斯方块实例进行对战。核心规则：当任意玩家一次消除 4 行时，立即在其他两个玩家的板子最底部随机增加一行障碍（留一个缺口）。最终根据存活时间或得分判定胜负。
 
-## 技术约束
-- 后端语言：Python，使用asyncio + aiohttp实现三个Agent的并发API调用（Qwen API）。
-- 前端：HTML + JavaScript（Canvas绘制），通过WebSocket接收状态。
-- 部署环境：2U2G ECS（需确保资源足够）。
+## 技术架构
 
-## 期望输出
-请提供一个清晰的项目概要，包括：
-- 模块划分及交互流程
-- 关键接口定义（如WebSocket消息格式、Agent输入输出）
-- 实现要点和注意事项（如历史token管理、超时处理）
-- 开发步骤建议（可先实现规则Agent测试）
+### 后端
+- **FastAPI** - HTTP API 服务
+- **Python asyncio** - 异步处理
+- **SSE (Server-Sent Events)** - 实时状态推送
 
-无需过多技术细节，重在需求明确和架构清晰。
+### 前端
+- **HTML + JavaScript** - 页面渲染
+- **Canvas** - 游戏绘制
+- **EventSource API** - 接收实时状态
+
+### API 端点
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/game/start` | POST | 开始游戏 |
+| `/api/game/stop` | POST | 停止游戏 |
+| `/api/game/state` | GET | 获取游戏状态 |
+| `/api/game/status` | GET | 获取简化状态 |
+| `/api/game/sse` | GET | SSE 实时推送 |
+
+## 快速开始
+
+### 本地开发
+
+```bash
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动后端服务
+uvicorn backend.main:app --host 0.0.0.0 --port 8080 --reload
+
+# 访问前端
+# 浏览器打开 http://localhost:8080
+```
+
+### Docker 部署
+
+```bash
+# 构建并运行
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+```
+
+## 测试
+
+```bash
+# 运行所有测试
+pytest
+
+# 运行带覆盖率
+pytest --cov=backend
+```
+
+## 部署说明
+
+- **后端端口**: 8080（与现有服务 3000 端口完全分离）
+- **不影响现有服务**: 端口隔离验证通过
+
+## 项目结构
+
+```
+.
+├── backend/
+│   ├── main.py          # FastAPI 应用
+│   ├── http_client.py   # HTTP 客户端
+│   ├── game/            # 游戏逻辑
+│   ├── agents/          # AI Agent
+│   └── protocol/        # 消息协议
+├── frontend/
+│   ├── index.html       # 主页面
+│   ├── js/              # JavaScript
+│   └── css/             # 样式
+├── tests/               # 测试用例
+├── docker-compose.yml   # Docker 配置
+└── nginx.conf           # Nginx 配置
+```
+
+## License
+
+MIT

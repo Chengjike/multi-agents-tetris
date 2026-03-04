@@ -4,13 +4,12 @@ services:
   tetris:
     build: .
     ports:
-      - "8765:8765"  # WebSocket 端口
-      - "8080:8080"  # HTTP 端口
+      - "80:80"  # HTTP + WebSocket 端口
     environment:
       - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY:-}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      test: ["CMD", "curl", "-f", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -2,7 +2,7 @@
  * WebSocket 客户端
  */
 class TetrisWebSocket {
-    constructor(url = 'ws://localhost:8765/ws') {
+    constructor(url = 'ws://localhost/ws') {
         this.url = url;
         this.ws = null;
         this.connected = false;
@@ -66,6 +66,10 @@ class TetrisWebSocket {
 
     startGame() {
         this.send({ type: 'start' });
+    }
+
+    stopGame() {
+        this.send({ type: 'stop' });
     }
 
     requestStatus() {

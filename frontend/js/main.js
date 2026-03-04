@@ -2,8 +2,9 @@
  * 主程序
  */
 (function() {
-    // 配置
-    const WS_URL = `ws://${window.location.host || 'localhost:8765'}/ws`;
+    // 配置 - WebSocket 固定连接 8765 端口
+    const hostname = window.location.hostname || 'localhost';
+    const WS_URL = `ws://${hostname}:8765/ws`;
 
     // DOM 元素
     const startBtn = document.getElementById('startBtn');

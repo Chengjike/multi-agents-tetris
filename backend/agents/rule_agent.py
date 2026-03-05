@@ -128,7 +128,8 @@ class RuleAgent:
 
         # 复制棋盘来测试消除行（不修改原始棋盘）
         test_board = board.copy()
-        lines_cleared = test_board.clear_lines()
+        cleared_rows = test_board.clear_lines()
+        lines_cleared = len(cleared_rows)  # 现在返回的是行号列表
 
         # 计算即将完成行数（只差1-2个格子的行）- 使用测试后的棋盘
         near_complete_lines = 0

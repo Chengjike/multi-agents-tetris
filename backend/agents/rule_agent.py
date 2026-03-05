@@ -34,49 +34,33 @@ class RuleAgent:
         if game.current_piece is None:
             return PlayerAction.WAIT
 
-        # 如果方块还在屏幕上方（y < 0），让它先自然下落
-        if game.current_piece.y < 0:
-            return PlayerAction.SOFT_DROP
+        # 始终获取最佳落点位置
+        best_x, best_rotation, _ = self.get_best_position_and_rotation(game)
 
-        # 检查方块是否已经落地（不能再下落）
-        test_piece = game.current_piece.clone()
-        test_piece.y += 1
-        if game.board.check_collision(test_piece):
-            # 方块已经落地，获取最佳位置
-            best_x, best_rotation, _ = self.get_best_position_and_rotation(game)
+        # 如果当前位置/旋转不是最佳的，尝试调整
+        if game.current_piece.rotation != best_rotation:
+            # 尝试旋转
+            test_rotated = game.current_piece.clone()
+            test_rotated.rotate()
+            if not game.board.check_collision(test_rotated):
+                return PlayerAction.ROTATE
 
-            # 如果当前位置已经是最佳的，直接硬降
-            if (game.current_piece.x == best_x and
-                game.current_piece.rotation == best_rotation):
-                return PlayerAction.HARD_DROP
+        if game.current_piece.x < best_x:
+            # 尝试右移
+            test_moved = game.current_piece.clone()
+            test_moved.x += 1
+            if not game.board.check_collision(test_moved):
+                return PlayerAction.MOVE_RIGHT
 
-            # 尝试执行移动或旋转动作
-            if game.current_piece.rotation != best_rotation:
-                # 尝试旋转
-                test_rotated = game.current_piece.clone()
-                test_rotated.rotate()
-                if not game.board.check_collision(test_rotated):
-                    return PlayerAction.ROTATE
+        if game.current_piece.x > best_x:
+            # 尝试左移
+            test_moved = game.current_piece.clone()
+            test_moved.x -= 1
+            if not game.board.check_collision(test_moved):
+                return PlayerAction.MOVE_LEFT
 
-            if game.current_piece.x < best_x:
-                # 尝试右移
-                test_moved = game.current_piece.clone()
-                test_moved.x += 1
-                if not game.board.check_collision(test_moved):
-                    return PlayerAction.MOVE_RIGHT
-
-            if game.current_piece.x > best_x:
-                # 尝试左移
-                test_moved = game.current_piece.clone()
-                test_moved.x -= 1
-                if not game.board.check_collision(test_moved):
-                    return PlayerAction.MOVE_LEFT
-
-            # 如果所有移动/旋转都无效，直接硬降尝试
-            return PlayerAction.HARD_DROP
-
-        # 方块在空中，让它下落
-        return PlayerAction.SOFT_DROP
+        # 如果位置和旋转都已优化，直接硬降
+        return PlayerAction.HARD_DROP
 
     def _evaluate_board(self, board) -> float:
         """

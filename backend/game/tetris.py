@@ -80,6 +80,12 @@ class TetrisGame:
         # 将当前方块放置到棋盘
         if self.current_piece:
             self.board.place_piece(self.current_piece)
+            
+            # 放置后立即检测满行（在消除之前）
+            self.last_cleared_rows = []
+            for y, row in enumerate(self.board._grid):
+                if all(cell != 0 for cell in row):
+                    self.last_cleared_rows.append(y)
 
         # 检查棋盘是否已满（游戏结束条件）- 超过90%就算满
         filled_cells = sum(sum(row) for row in self.board._grid)

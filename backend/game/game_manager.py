@@ -126,13 +126,6 @@ class GameManager:
 
             # 如果自动下落导致碰撞（方块落地），则生成新方块
             if game.board.check_collision(game.current_piece):
-                # 先检查哪些行会被消除（在实际消除之前）
-                full_rows = []
-                for y, row in enumerate(game.board._grid):
-                    if all(cell != 0 for cell in row):
-                        full_rows.append(y)
-                game.last_cleared_rows = full_rows  # 记录消除前的行
-                
                 result = game.spawn_new_piece()
                 if not result:
                     # 游戏结束
@@ -156,13 +149,6 @@ class GameManager:
 
             # 如果动作失败（碰撞），生成新方块
             if not action_result and game.current_piece:
-                # 先检查哪些行会被消除（在实际消除之前）
-                full_rows = []
-                for y, row in enumerate(game.board._grid):
-                    if all(cell != 0 for cell in row):
-                        full_rows.append(y)
-                game.last_cleared_rows = full_rows  # 记录消除前的行
-                
                 game.spawn_new_piece()
                 game._process_line_clearing()
 

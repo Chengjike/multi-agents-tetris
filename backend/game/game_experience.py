@@ -71,6 +71,14 @@ class GameExperience:
                 impact="medium",
                 tags=["AI", "策略", "权重"]
             ),
+            Experience(
+                id="exp_006",
+                category="bug_fix",
+                title="高度计算从顶部开始导致AI偏好顶部",
+                description="get_height_map()之前从顶部(y=0)计算高度，导致AI认为方块在顶部是'低高度'，实际上应该从底部计算。这导致AI倾向于把方块放在顶部形成对角线。修复方法：从底部向上计算高度。",
+                impact="high",
+                tags=["AI", "高度计算", "对角线", "评估"]
+            ),
         ]
         self.experiences.extend(founded)
 

@@ -49,6 +49,7 @@ class TetrisGame:
         self.status = GameStatus.WAITING
         self.score = 0
         self.lines_cleared_total = 0
+        self.prev_lines_cleared_total = 0  # 上次tick的累计消除行数
 
         # 生成第一个方块
         self._generate_next_piece()

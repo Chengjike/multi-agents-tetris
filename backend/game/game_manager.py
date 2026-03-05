@@ -141,12 +141,15 @@ class GameManager:
                     game.spawn_new_piece()
                     game._process_line_clearing()
 
-            # 记录消除行数
+            # 记录消除行数（计算当次tick新增的消除行数）
             if game.current_piece is None:
                 lines = 0
             else:
-                # 从上次tick计算消除行数
-                lines = game.lines_cleared_total
+                # 计算delta：本次累计 - 上次累计 = 当次消除行数
+                lines = game.lines_cleared_total - game.prev_lines_cleared_total
+
+            # 更新上次累计值
+            game.prev_lines_cleared_total = game.lines_cleared_total
 
             # 记录并检查惩罚
             if lines > 0:

@@ -15,8 +15,10 @@ class RuleAgent:
     WEIGHT_HEIGHT = -0.5      # 高度越低越好（降低权重）
     WEIGHT_HOLES = -3.0       # 空洞越少越好
     WEIGHT_BUMPINESS = -0.3   # 不平整度越低越好（降低权重）
-    WEIGHT_LINES = 100.0      # 消除行越多越好（大幅提高权重）
-    WEIGHT_COMPLETE_LINE = 200.0  # 完成一行（即将满的行）的奖励 - 大幅提高
+    WEIGHT_LINES = 500.0      # 消除行越多越好（大幅提高权重）
+    WEIGHT_COMPLETE_LINE = 300.0  # 完成一行（即将满的行）的奖励
+    WEIGHT_WELL = -50.0       # 井（深坑）惩罚 - 避免形成无法填充的坑
+    WEIGHT_COLUMN_FILL = 20.0  # 列填充率奖励 - 优先填接近满的列
 
     def __init__(self, player_id: int):
         self.player_id = player_id
@@ -96,13 +98,29 @@ class RuleAgent:
             if 8 <= filled <= 9:  # 差1-2个格子就满了
                 near_complete_lines += 1
 
+        # 计算井（深坑）惩罚 - 检测相邻列高度差大于3的情况
+        well_penalty = 0
+        for i in range(len(height_map) - 1):
+            for j in range(i + 1, len(height_map)):
+                diff = abs(height_map[i] - height_map[j])
+                if diff >= 3:  # 高度差>=3认为是井
+                    well_penalty += diff * diff  # 差越大惩罚越重
+
+        # 计算列填充率奖励 - 优先填接近满的列
+        column_fill_bonus = 0
+        for h in height_map:
+            if h >= 15:  # 高度>=15（接近顶部）
+                column_fill_bonus += h * self.WEIGHT_COLUMN_FILL
+
         score = (
             self.WEIGHT_HEIGHT * total_height +
             self.WEIGHT_HOLES * holes +
             self.WEIGHT_BUMPINESS * bumpiness +
             self.WEIGHT_HEIGHT * max_height * 0.5 +
             self.WEIGHT_LINES * lines_cleared +
-            self.WEIGHT_COMPLETE_LINE * near_complete_lines
+            self.WEIGHT_COMPLETE_LINE * near_complete_lines +
+            self.WEIGHT_WELL * well_penalty +
+            column_fill_bonus
         )
 
         return score

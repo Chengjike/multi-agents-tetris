@@ -154,17 +154,20 @@ class Board:
 
     def get_height_map(self) -> List[int]:
         """
-        获取每列的最高方块高度
+        获取每列的最高方块高度（从底部计算）
 
         Returns:
-            长度为 width 的列表，值为每列的最高点（从0开始，0表示该列为空）
+            长度为 width 的列表，值为每列的最高点距离底部的高度
+            0表示该列为空，height表示该列已满到顶部
         """
-        height_map = [self.height for _ in range(self.width)]
+        height_map = [0 for _ in range(self.width)]
 
-        for y in range(self.height):
-            for x in range(self.width):
+        for x in range(self.width):
+            # 从底部向上找第一个填充的格子
+            for y in range(self.height - 1, -1, -1):
                 if self._grid[y][x] != 0:
-                    height_map[x] = y
+                    # 高度 = 底部行索引 - 当前行索引 + 1
+                    height_map[x] = self.height - y
                     break
 
         return height_map

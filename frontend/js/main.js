@@ -258,15 +258,17 @@
 
             // 检测是否有行消除（通过 lines_cleared 增加）
             const currentLines = player.lines_cleared || 0;
-            if (currentLines > prevLinesCleared[index]) {
-                // 触发闪烁效果（所有行闪烁2次）
-                // 闪烁4次：亮-暗-亮-暗
-                renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]);
+            const clearedRows = player.last_cleared_rows || [];
+            
+            if (currentLines > prevLinesCleared[index] && clearedRows.length > 0) {
+                // 只闪烁消除的行
+                console.log('Player', index, 'cleared rows:', clearedRows);
+                renderer.setFlashLines(clearedRows);
                 // 150ms 后第一次闪烁
                 setTimeout(() => renderer.clearFlash(), 150);
-                setTimeout(() => renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]), 300);
+                setTimeout(() => renderer.setFlashLines(clearedRows), 300);
                 setTimeout(() => renderer.clearFlash(), 450);
-                setTimeout(() => renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]), 600);
+                setTimeout(() => renderer.setFlashLines(clearedRows), 600);
                 setTimeout(() => renderer.clearFlash(), 750);
             }
             prevLinesCleared[index] = currentLines;

@@ -123,6 +123,11 @@ class GameManager:
                     continue
                 game._process_line_clearing()
 
+            # 再次检查游戏是否结束（生成新方块后）
+            if game.check_game_over():
+                game.status = GameStatus.GAME_OVER
+                continue
+
             # 检查游戏是否结束
             if game.status == GameStatus.GAME_OVER:
                 continue

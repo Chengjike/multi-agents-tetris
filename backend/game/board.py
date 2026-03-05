@@ -88,12 +88,12 @@ class Board:
 
         return True
 
-    def clear_lines(self) -> int:
+    def clear_lines(self) -> List[int]:
         """
         消除已满的行（所有满行都会被消除，不只是连续的）
 
         Returns:
-            消除的行数
+            消除的行号列表
         """
         # 找出所有满的行
         full_rows = []
@@ -101,20 +101,18 @@ class Board:
             if all(cell != 0 for cell in row):
                 full_rows.append(y)
 
-        lines_cleared = len(full_rows)
-
-        if lines_cleared == 0:
-            return 0
+        if not full_rows:
+            return []
 
         # 创建新棋盘，只保留未满的行
         new_grid = [row for row in self._grid if not all(cell != 0 for cell in row)]
 
         # 在顶部添加空行
-        for _ in range(lines_cleared):
+        for _ in range(len(full_rows)):
             new_grid.insert(0, [0 for _ in range(self.width)])
 
         self._grid = new_grid
-        return lines_cleared
+        return full_rows
 
     def add_bottom_row(self) -> None:
         """

@@ -50,6 +50,7 @@ class TetrisGame:
         self.score = 0
         self.lines_cleared_total = 0
         self.prev_lines_cleared_total = 0  # 上次tick的累计消除行数
+        self.last_cleared_rows: List[int] = []  # 最近消除的行号
 
         # 生成第一个方块
         self._generate_next_piece()
@@ -200,15 +201,19 @@ class TetrisGame:
         """处理行消除
 
         Returns:
-            消除的行数
+            消除的行号列表
         """
-        lines = self.board.clear_lines()
-        if lines > 0:
-            self.lines_cleared_total += lines
+        cleared_rows = self.board.clear_lines()
+        lines_count = len(cleared_rows)
+        if lines_count > 0:
+            self.lines_cleared_total += lines_count
+            self.last_cleared_rows = cleared_rows  # 记录最近消除的行
             # 根据消除行数计算分数
-            self.score += SCORES.get(lines, lines * 100)
+            self.score += SCORES.get(lines_count, lines_count * 100)
+        else:
+            self.last_cleared_rows = []
 
-        return lines
+        return cleared_rows
 
     def get_state(self) -> Dict[str, Any]:
         """获取游戏状态"""
@@ -228,6 +233,7 @@ class TetrisGame:
                 'type': self.next_piece.type.value if self.next_piece else None,
             } if self.next_piece else None,
             'lines_cleared': self.lines_cleared_total,
+            'last_cleared_rows': self.last_cleared_rows,  # 最近消除的行
         }
 
     def get_piece_at_bottom(self, piece: Piece) -> Piece:

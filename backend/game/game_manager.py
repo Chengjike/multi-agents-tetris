@@ -145,15 +145,12 @@ class GameManager:
             action = agent.decide(game)
 
             # 执行动作
-            game.perform_action(action)
+            action_result = game.perform_action(action)
 
-            # 注意：spawn_new_piece() 已经在 perform_action() 中处理了
-            # 特别是 HARD_DROP 会自动调用 spawn_new_piece()
-            # 对于其他动作（SOFT_DROP, MOVE_LEFT, MOVE_RIGHT, ROTATE, WAIT），如果碰撞了也需要生成新方块
-            if action != PlayerAction.HARD_DROP:
-                if game.current_piece and game.board.check_collision(game.current_piece):
-                    game.spawn_new_piece()
-                    game._process_line_clearing()
+            # 如果动作失败（碰撞），生成新方块
+            if not action_result and game.current_piece:
+                game.spawn_new_piece()
+                game._process_line_clearing()
 
             # 记录消除行数（计算当次tick新增的消除行数）
             if game.current_piece is None:

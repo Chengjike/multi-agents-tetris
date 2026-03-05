@@ -17,12 +17,70 @@ class GameRenderer {
         // 闪烁效果相关
         this.flashLines = []; // 要闪烁消除的行
         this.flashCount = {}; // 每行的闪烁计数
+        
+        // 动画相关 - 为每个玩家保存状态
+        this.playerStates = {}; // { playerId: { lastPiece, lastBoard, animatingPiece } }
+        this.animationFrameId = null;
+    }
+
+    // 获取或创建玩家状态
+    _getPlayerState(playerId) {
+        if (!this.playerStates[playerId]) {
+            this.playerStates[playerId] = {
+                lastPiece: null,
+                lastBoard: null,
+                animatingPiece: null, // 当前动画中的方块
+                animationProgress: 1, // 动画进度 0-1
+            };
+        }
+        return this.playerStates[playerId];
     }
 
     render(canvas, gameState) {
         const ctx = canvas.getContext('2d');
+        const playerId = gameState.player_id;
         const board = gameState.board;
         const currentPiece = gameState.current_piece;
+        
+        // 获取玩家状态
+        const state = this._getPlayerState(playerId);
+        
+        // 检测方块变化并启动动画
+        let drawPiece = currentPiece;
+        if (currentPiece && currentPiece.type) {
+            if (state.lastPiece && state.lastPiece.type === currentPiece.type) {
+                // 方块类型相同，检测位置变化
+                const dx = currentPiece.x - state.lastPiece.x;
+                const dy = currentPiece.y - state.lastPiece.y;
+                
+                // 如果有移动，启动动画
+                if ((Math.abs(dx) > 0 || Math.abs(dy) > 0) && state.animationProgress >= 1) {
+                    // 开始新动画：从上次位置移动到当前位置
+                    state.animatingPiece = {
+                        ...state.lastPiece,
+                        targetX: currentPiece.x,
+                        targetY: currentPiece.y,
+                        startX: state.lastPiece.x,
+                        startY: state.lastPiece.y,
+                    };
+                    state.animationProgress = 0;
+                }
+                
+                // 如果有进行中的动画，使用插值
+                if (state.animatingPiece && state.animationProgress < 1) {
+                    // 缓动函数
+                    const t = this._easeOutQuad(state.animationProgress);
+                    drawPiece = {
+                        ...currentPiece,
+                        x: state.animatingPiece.startX + (state.animatingPiece.targetX - state.animatingPiece.startX) * t,
+                        y: state.animatingPiece.startY + (state.animatingPiece.targetY - state.animatingPiece.startY) * t,
+                    };
+                }
+            }
+            
+            // 更新上次状态
+            state.lastPiece = { ...currentPiece };
+        }
 
         // 清空画布
         ctx.fillStyle = '#000';
@@ -51,24 +109,35 @@ class GameRenderer {
         }
 
         // 绘制当前方块（带3D效果）
-        if (currentPiece && currentPiece.type) {
-            console.log('Drawing piece:', currentPiece.type, 'at', currentPiece.x, currentPiece.y, 'rotation:', currentPiece.rotation);
-            const pieceType = currentPiece.type;
+        if (drawPiece && drawPiece.type) {
+            const pieceType = drawPiece.type;
             const color = this.colors[pieceType] || '#fff';
-            const x = currentPiece.x;
-            const y = currentPiece.y;
-            const rotation = currentPiece.rotation || 0;
+            const x = Math.round(drawPiece.x); // 取整用于绘制
+            const y = Math.round(drawPiece.y);
+            const rotation = drawPiece.rotation || 0;
 
             const cells = this._getPieceCells(pieceType, rotation);
-            console.log('Piece cells:', cells);
             cells.forEach(([dx, dy]) => {
-                console.log('Drawing cell at', x + dx, y + dy);
                 this._drawCell3D(ctx, x + dx, y + dy, color);
             });
         }
 
         // 绘制网格线
         this._drawGrid(ctx, canvas.width, canvas.height);
+        
+        // 更新动画进度
+        if (state.animationProgress < 1) {
+            state.animationProgress += 0.2; // 动画速度
+            if (state.animationProgress >= 1) {
+                state.animationProgress = 1;
+                state.animatingPiece = null;
+            }
+        }
+    }
+    
+    // 缓动函数
+    _easeOutQuad(t) {
+        return t * (2 - t);
     }
 
     // 3D 效果的单元格绘制

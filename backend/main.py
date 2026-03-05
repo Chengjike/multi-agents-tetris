@@ -18,6 +18,7 @@ from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
 from sse_starlette.sse import EventSourceResponse
 
 from backend.game.game_manager import GameManager
+from backend.game.game_experience import game_experience
 from backend.protocol.messages import parse_message, create_error
 
 logging.basicConfig(level=logging.INFO)
@@ -158,6 +159,33 @@ async def get_game_status():
     return {
         "game_status": state["game_status"],
         "tick": state["tick"],
+    }
+
+
+# ========== 经验知识库端点 ==========
+
+@app.get("/api/experience")
+async def get_experiences():
+    """获取所有游戏经验"""
+    return {
+        "experiences": game_experience.to_dict(),
+        "guidance": game_experience.get_ai_guidance()
+    }
+
+
+@app.get("/api/experience/{exp_id}")
+async def get_experience(exp_id: str):
+    """获取单条经验"""
+    exp = game_experience.get_experience(exp_id)
+    if exp is None:
+        return {"error": "Experience not found"}, 404
+    return {
+        "id": exp.id,
+        "category": exp.category,
+        "title": exp.title,
+        "description": exp.description,
+        "impact": exp.impact,
+        "tags": exp.tags
     }
 
 

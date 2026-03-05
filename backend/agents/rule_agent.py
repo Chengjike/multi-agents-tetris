@@ -64,8 +64,9 @@ class RuleAgent:
             # 放置并检查消除行数
             test_board.place_piece(test_piece)
             temp_board = test_board.copy()
-            lines = temp_board.clear_lines()
-            
+            cleared_rows = temp_board.clear_lines()
+            lines = len(cleared_rows)  # 现在返回的是行号列表
+
             if lines > best_lines:
                 best_lines = lines
                 best_action = action

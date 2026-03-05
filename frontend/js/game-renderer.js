@@ -38,62 +38,8 @@ class GameRenderer {
 
     render(canvas, gameState) {
         const ctx = canvas.getContext('2d');
-        const playerId = gameState.player_id;
         const board = gameState.board;
         const currentPiece = gameState.current_piece;
-        
-        // 获取玩家状态
-        const state = this._getPlayerState(playerId);
-        
-        // 检测方块变化并启动动画
-        let drawPiece = currentPiece;
-        
-        // 检查是否是同一个方块（类型相同）
-        const isSamePiece = state.lastPiece && currentPiece && 
-            state.lastPiece.type === currentPiece.type;
-        
-        if (isSamePiece) {
-            // 方块类型相同，检测位置变化
-            const dx = currentPiece.x - state.lastPiece.x;
-            const dy = currentPiece.y - state.lastPiece.y;
-            
-            // 如果有移动且没有进行中的动画，启动新动画
-            if ((Math.abs(dx) > 0 || Math.abs(dy) > 0) && !state.animatingPiece) {
-                state.animatingPiece = {
-                    type: currentPiece.type,
-                    startX: state.lastPiece.x,
-                    startY: state.lastPiece.y,
-                    targetX: currentPiece.x,
-                    targetY: currentPiece.y,
-                };
-                state.animationProgress = 0;
-            }
-            
-            // 如果有进行中的动画，使用插值
-            if (state.animatingPiece && state.animationProgress < 1) {
-                const t = state.animationProgress;
-                drawPiece = {
-                    ...currentPiece,
-                    x: state.animatingPiece.startX + (state.animatingPiece.targetX - state.animatingPiece.startX) * t,
-                    y: state.animatingPiece.startY + (state.animatingPiece.targetY - state.animatingPiece.startY) * t,
-                };
-                // 更新动画进度
-                state.animationProgress += 0.15;
-                if (state.animationProgress >= 1) {
-                    state.animationProgress = 1;
-                    state.animatingPiece = null;
-                }
-            }
-        } else {
-            // 方块类型变化，重置动画状态
-            state.animatingPiece = null;
-            state.animationProgress = 1;
-        }
-        
-        // 更新上次状态
-        if (currentPiece && currentPiece.type) {
-            state.lastPiece = { ...currentPiece };
-        }
 
         // 清空画布
         ctx.fillStyle = '#000';
@@ -122,12 +68,12 @@ class GameRenderer {
         }
 
         // 绘制当前方块（带3D效果）
-        if (drawPiece && drawPiece.type) {
-            const pieceType = drawPiece.type;
+        if (currentPiece && currentPiece.type) {
+            const pieceType = currentPiece.type;
             const color = this.colors[pieceType] || '#fff';
-            const x = Math.round(drawPiece.x);
-            const y = Math.round(drawPiece.y);
-            const rotation = drawPiece.rotation || 0;
+            const x = currentPiece.x;
+            const y = currentPiece.y;
+            const rotation = currentPiece.rotation || 0;
 
             const cells = this._getPieceCells(pieceType, rotation);
             cells.forEach(([dx, dy]) => {

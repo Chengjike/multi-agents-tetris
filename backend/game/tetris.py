@@ -103,9 +103,9 @@ class TetrisGame:
         # 检查当前方块是否可以放置
         if self.current_piece and self.board.check_collision(self.current_piece):
             return True
-        # 检查棋盘是否已满
+        # 检查棋盘是否已满（70%就结束）
         filled_cells = sum(sum(row) for row in self.board._grid)
-        if filled_cells >= self.board.height * self.board.width * 0.9:
+        if filled_cells >= self.board.height * self.board.width * 0.7:
             return True
         return False
 

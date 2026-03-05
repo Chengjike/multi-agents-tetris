@@ -222,6 +222,42 @@ class GameRenderer {
             }
         }
     }
+    
+    // 渲染下一个方块
+    renderNextPiece(canvas, nextPiece) {
+        const ctx = canvas.getContext('2d');
+        const cellSize = 20;
+        
+        // 清空画布
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        if (!nextPiece || !nextPiece.type) return;
+        
+        const pieceType = nextPiece.type;
+        const color = this.colors[pieceType] || '#fff';
+        
+        // 获取方块形状
+        const cells = this._getPieceCells(pieceType, 0);
+        
+        // 计算居中位置
+        const offsetX = (canvas.width / cellSize - 4) / 2;
+        const offsetY = (canvas.height / cellSize - 4) / 2;
+        
+        // 绘制方块
+        cells.forEach(([dx, dy]) => {
+            const px = (offsetX + dx) * cellSize;
+            const py = (offsetY + dy) * cellSize;
+            
+            ctx.fillStyle = color;
+            ctx.fillRect(px, py, cellSize - 1, cellSize - 1);
+            
+            // 添加高光
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(px, py, cellSize - 1, 2);
+            ctx.fillRect(px, py, 2, cellSize - 1);
+        });
+    }
 }
 
 // 导出

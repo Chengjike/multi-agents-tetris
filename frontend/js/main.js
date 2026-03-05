@@ -17,6 +17,7 @@
     let client = null;
     let renderers = [];
     let canvases = [];
+    let nextCanvases = [];
     let scoreElements = [];
     let statusElements = [];
     let bgMusic = null;
@@ -166,6 +167,11 @@
         document.querySelectorAll('.board').forEach(canvas => {
             canvases[parseInt(canvas.dataset.player)] = canvas;
         });
+        
+        // 获取下一个方块画布
+        document.querySelectorAll('.next-canvas').forEach(canvas => {
+            nextCanvases[parseInt(canvas.dataset.player)] = canvas;
+        });
 
         // 获取分数和状态元素
         document.querySelectorAll('.player').forEach((el, index) => {
@@ -309,6 +315,11 @@
             const status = player.status === 'game_over' ? 'dead' : 'alive';
             if (statusElements[index]) {
                 renderer.updateStatus(statusElements[index], status);
+            }
+            
+            // 渲染下一个方块
+            if (player.next_piece && nextCanvases[index]) {
+                renderer.renderNextPiece(nextCanvases[index], player.next_piece);
             }
         });
     }

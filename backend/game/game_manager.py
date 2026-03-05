@@ -63,6 +63,10 @@ class GameManager:
     def stop_game(self) -> None:
         """停止游戏"""
         self.running = False
+        # 检查是否有玩家应该结束游戏
+        for game in self.games:
+            if game.check_game_over():
+                game.status = GameStatus.GAME_OVER
         self.game_status = GameStatus.PAUSED
 
     def get_current_tick_interval(self) -> float:

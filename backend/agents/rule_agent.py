@@ -16,7 +16,7 @@ class RuleAgent:
     WEIGHT_HOLES = -3.0       # 空洞越少越好
     WEIGHT_BUMPINESS = -0.3   # 不平整度越低越好（降低权重）
     WEIGHT_LINES = 100.0      # 消除行越多越好（大幅提高权重）
-    WEIGHT_COMPLETE_LINE = 50.0  # 完成一行（即将满的行）的奖励
+    WEIGHT_COMPLETE_LINE = 200.0  # 完成一行（即将满的行）的奖励 - 大幅提高
 
     def __init__(self, player_id: int):
         self.player_id = player_id
@@ -89,9 +89,9 @@ class RuleAgent:
         test_board = board.copy()
         lines_cleared = test_board.clear_lines()
 
-        # 计算即将完成行数（只差1-2个格子的行）
+        # 计算即将完成行数（只差1-2个格子的行）- 使用测试后的棋盘
         near_complete_lines = 0
-        for y, row in enumerate(board._grid):
+        for y, row in enumerate(test_board._grid):
             filled = sum(1 for cell in row if cell != 0)
             if 8 <= filled <= 9:  # 差1-2个格子就满了
                 near_complete_lines += 1

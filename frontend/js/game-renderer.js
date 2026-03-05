@@ -240,9 +240,21 @@ class GameRenderer {
         // 获取方块形状
         const cells = this._getPieceCells(pieceType, 0);
         
-        // 计算居中位置
-        const offsetX = (canvas.width / cellSize - 4) / 2;
-        const offsetY = (canvas.height / cellSize - 4) / 2;
+        // 计算居中位置 - 基于方块的边界
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        cells.forEach(([dx, dy]) => {
+            minX = Math.min(minX, dx);
+            maxX = Math.max(maxX, dx);
+            minY = Math.min(minY, dy);
+            maxY = Math.max(maxY, dy);
+        });
+        
+        const pieceWidth = maxX - minX + 1;
+        const pieceHeight = maxY - minY + 1;
+        
+        // 居中显示
+        const offsetX = (canvas.width / cellSize - pieceWidth) / 2 - minX;
+        const offsetY = (canvas.height / cellSize - pieceHeight) / 2 - minY;
         
         // 绘制方块
         cells.forEach(([dx, dy]) => {

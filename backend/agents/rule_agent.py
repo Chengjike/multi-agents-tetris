@@ -36,71 +36,30 @@ class RuleAgent:
         if game.current_piece is None:
             return PlayerAction.WAIT
 
-        # 贪心策略：先检查所有可能动作，看哪个能消除最多行
-        best_action = PlayerAction.WAIT
-        best_lines = -1
-        
-        for action in [PlayerAction.HARD_DROP, PlayerAction.ROTATE, PlayerAction.MOVE_LEFT, PlayerAction.MOVE_RIGHT]:
-            # 模拟动作
-            test_board = game.board.copy()
-            test_piece = game.current_piece.clone()
-            
-            if action == PlayerAction.HARD_DROP:
-                # 硬降到底
-                while not test_board.check_collision(test_piece):
-                    test_piece.y += 1
-                test_piece.y -= 1
-            elif action == PlayerAction.ROTATE:
-                test_piece.rotate()
-            elif action == PlayerAction.MOVE_LEFT:
-                test_piece.x -= 1
-            elif action == PlayerAction.MOVE_RIGHT:
-                test_piece.x += 1
-            
-            # 检查碰撞
-            if test_board.check_collision(test_piece):
-                continue
-            
-            # 放置并检查消除行数
-            test_board.place_piece(test_piece)
-            temp_board = test_board.copy()
-            cleared_rows = temp_board.clear_lines()
-            lines = len(cleared_rows)  # 现在返回的是行号列表
-
-            if lines > best_lines:
-                best_lines = lines
-                best_action = action
-        
-        # 如果有动作能消除行，直接使用（贪心策略）
-        if best_lines > 0:
-            return best_action
-
-        # 始终获取最佳落点位置
+        # 获取最佳落点位置
         best_x, best_rotation, _ = self.get_best_position_and_rotation(game)
 
-        # 如果当前位置/旋转不是最佳的，尝试调整
+        # 优先旋转到最佳角度
         if game.current_piece.rotation != best_rotation:
-            # 尝试旋转
             test_rotated = game.current_piece.clone()
             test_rotated.rotate()
             if not game.board.check_collision(test_rotated):
                 return PlayerAction.ROTATE
 
+        # 然后移动到最佳位置
         if game.current_piece.x < best_x:
-            # 尝试右移
             test_moved = game.current_piece.clone()
             test_moved.x += 1
             if not game.board.check_collision(test_moved):
                 return PlayerAction.MOVE_RIGHT
 
         if game.current_piece.x > best_x:
-            # 尝试左移
             test_moved = game.current_piece.clone()
             test_moved.x -= 1
             if not game.board.check_collision(test_moved):
                 return PlayerAction.MOVE_LEFT
 
-        # 如果位置和旋转都已优化，直接硬降
+        # 位置和旋转都到位了，硬降
         return PlayerAction.HARD_DROP
 
     def _evaluate_board(self, board) -> float:

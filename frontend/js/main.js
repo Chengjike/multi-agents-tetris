@@ -6,10 +6,12 @@
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     const restartBtn = document.getElementById('restartBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
     const gameStatus = document.getElementById('gameStatus');
     const gameOverModal = document.getElementById('gameOverModal');
     const winnerSpan = document.getElementById('winner');
     const finalScoresList = document.getElementById('finalScores');
+    const scoreList = document.getElementById('scoreList');
 
     // 游戏组件 - 使用 HTTP + SSE 客户端
     let client = null;
@@ -204,6 +206,11 @@
             playMusic();
             client.restartGame();
         });
+        
+        // 关闭弹窗按钮
+        closeModalBtn.addEventListener('click', () => {
+            gameOverModal.classList.add('hidden');
+        });
 
         // 尝试连接
         connect();
@@ -251,6 +258,16 @@
         // 启用/禁用按钮
         startBtn.disabled = true;
         stopBtn.disabled = false;
+
+        // 更新得分排行榜
+        const playerNames = ['Александр', 'Михаил', 'Иван'];
+        const sortedPlayers = data.players
+            .map((p, i) => ({ name: playerNames[i], score: p.score, status: p.status }))
+            .sort((a, b) => b.score - a.score);
+        
+        scoreList.innerHTML = sortedPlayers.map(p => 
+            `<li><span class="player-name">${p.name}</span><span class="player-score">${p.score}</span></li>`
+        ).join('');
 
         // 渲染每个玩家
         data.players.forEach((player, index) => {

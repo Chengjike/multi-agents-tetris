@@ -51,6 +51,7 @@
 
         <div id="gameOverModal" class="modal hidden">
             <div class="modal-content">
+                <span class="close-btn" id="closeModalBtn">&times;</span>
                 <h2>游戏结束</h2>
                 <p>获胜者: <span id="winner">-</span></p>
                 <p>最终分数:</p>
@@ -58,10 +59,16 @@
                 <button id="restartBtn" class="btn">再来一局</button>
             </div>
         </div>
+        
+        <!-- 得分排行榜 -->
+        <div class="leaderboard">
+            <h3>得分排行榜</h3>
+            <ul id="scoreList"></ul>
+        </div>
     </div>
 
-    <script src="js/http-client.js?v=11"></script>
-    <script src="js/game-renderer.js?v=11"></script>
-    <script src="js/main.js?v=11"></script>
+    <script src="js/http-client.js?v=12"></script>
+    <script src="js/game-renderer.js?v=12"></script>
+    <script src="js/main.js?v=12"></script>
 </body>
 </html>

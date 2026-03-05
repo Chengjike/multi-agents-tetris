@@ -15,8 +15,8 @@ class RuleAgent:
     WEIGHT_HEIGHT = -0.5      # 高度越低越好（降低权重）
     WEIGHT_HOLES = -3.0       # 空洞越少越好
     WEIGHT_BUMPINESS = -0.3   # 不平整度越低越好（降低权重）
-    WEIGHT_LINES = 500.0      # 消除行越多越好（大幅提高权重）
-    WEIGHT_COMPLETE_LINE = 300.0  # 完成一行（即将满的行）的奖励
+    WEIGHT_LINES = 1000.0     # 消除行越多越好（最高优先级）
+    WEIGHT_COMPLETE_LINE = 500.0  # 完成一行（即将满的行）的奖励
     WEIGHT_WELL = -50.0       # 井（深坑）惩罚 - 避免形成无法填充的坑
     WEIGHT_COLUMN_FILL = 20.0  # 列填充率奖励 - 优先填接近满的列
 
@@ -35,6 +35,44 @@ class RuleAgent:
         """
         if game.current_piece is None:
             return PlayerAction.WAIT
+
+        # 贪心策略：先检查所有可能动作，看哪个能消除最多行
+        best_action = PlayerAction.WAIT
+        best_lines = -1
+        
+        for action in [PlayerAction.HARD_DROP, PlayerAction.ROTATE, PlayerAction.MOVE_LEFT, PlayerAction.MOVE_RIGHT]:
+            # 模拟动作
+            test_board = game.board.copy()
+            test_piece = game.current_piece.clone()
+            
+            if action == PlayerAction.HARD_DROP:
+                # 硬降到底
+                while not test_board.check_collision(test_piece):
+                    test_piece.y += 1
+                test_piece.y -= 1
+            elif action == PlayerAction.ROTATE:
+                test_piece.rotate()
+            elif action == PlayerAction.MOVE_LEFT:
+                test_piece.x -= 1
+            elif action == PlayerAction.MOVE_RIGHT:
+                test_piece.x += 1
+            
+            # 检查碰撞
+            if test_board.check_collision(test_piece):
+                continue
+            
+            # 放置并检查消除行数
+            test_board.place_piece(test_piece)
+            temp_board = test_board.copy()
+            lines = temp_board.clear_lines()
+            
+            if lines > best_lines:
+                best_lines = lines
+                best_action = action
+        
+        # 如果有动作能消除行，直接使用（贪心策略）
+        if best_lines > 0:
+            return best_action
 
         # 始终获取最佳落点位置
         best_x, best_rotation, _ = self.get_best_position_and_rotation(game)

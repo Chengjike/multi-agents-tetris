@@ -161,18 +161,20 @@ class RuleAgent:
             test_piece = game.current_piece.clone()
             test_piece.rotation = rotation
 
-            if game.board.check_collision(test_piece):
+            # 先让方块落到底部，再检查碰撞
+            bottom_piece = game.get_piece_at_bottom(test_piece)
+            
+            # 检查底部位置是否碰撞
+            if game.board.check_collision(bottom_piece):
                 continue
 
             # 尝试所有x位置
             for x in range(-2, game.board.width + 2):
                 test_piece.x = x
-
-                if game.board.check_collision(test_piece):
-                    continue
-
-                # 找到落底位置
                 bottom_piece = game.get_piece_at_bottom(test_piece)
+
+                if game.board.check_collision(bottom_piece):
+                    continue
 
                 # 临时放置方块
                 game.board.place_piece(bottom_piece)

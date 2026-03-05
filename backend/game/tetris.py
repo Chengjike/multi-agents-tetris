@@ -99,13 +99,13 @@ class TetrisGame:
         return True
 
     def check_game_over(self) -> bool:
-        """检查游戏是否结束"""
-        # 检查当前方块是否可以放置
+        """检查游戏是否结束 - 方块到顶就结束"""
+        # 检查当前方块是否可以放置（如果一出生就碰撞，说明到顶了）
         if self.current_piece and self.board.check_collision(self.current_piece):
             return True
-        # 检查棋盘是否已满（70%就结束）
-        filled_cells = sum(sum(row) for row in self.board._grid)
-        if filled_cells >= self.board.height * self.board.width * 0.7:
+        # 检查最高列是否到达顶部（高度=20表示满）
+        height_map = self.board.get_height_map()
+        if max(height_map) >= self.board.height:
             return True
         return False
 

@@ -67,7 +67,12 @@ class GameManager:
         for game in self.games:
             if game.check_game_over():
                 game.status = GameStatus.GAME_OVER
-        self.game_status = GameStatus.PAUSED
+        
+        # 如果所有玩家都结束了，游戏状态为 GAME_OVER
+        if self.check_all_game_over():
+            self.game_status = GameStatus.GAME_OVER
+        else:
+            self.game_status = GameStatus.PAUSED
 
     def get_current_tick_interval(self) -> float:
         """根据最高分数计算当前的 tick 间隔（分数越高速度越快）"""

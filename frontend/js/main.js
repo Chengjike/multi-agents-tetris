@@ -126,36 +126,6 @@
         }
     }
 
-        function playMelody() {
-            if (!isPlaying) return;
-
-            let startTime = window.bgAudioCtx.currentTime;
-            melody.forEach(({ note, duration }) => {
-                playNote(note, duration, startTime);
-                startTime += duration;
-            });
-
-            setTimeout(playMelody, (startTime - window.bgAudioCtx.currentTime) * 1000);
-        }
-
-        // 创建一个可控制的音乐对象
-        bgMusic = {
-            play: function() {
-                if (window.bgAudioCtx.state === 'suspended') {
-                    window.bgAudioCtx.resume();
-                }
-                isPlaying = true;
-                playMelody();
-            },
-            pause: function() {
-                isPlaying = false;
-            },
-            stop: function() {
-                isPlaying = false;
-            }
-        };
-    }
-
     function playMusic() {
         if (bgMusic && !isMusicPlaying) {
             try {

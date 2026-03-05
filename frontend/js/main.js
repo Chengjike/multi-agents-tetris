@@ -20,63 +20,111 @@
     let bgMusic = null;
     let isMusicPlaying = false;
 
-    // 初始化背景音乐（使用 Web Audio API 合成，无需外部文件）
+    // MIDI 音乐 URL
+    const MUSIC_URL = 'https://bitmidi.com/uploads/100444.mid';
+
+    // 初始化背景音乐（使用 MIDI 文件）
     function initMusic() {
-        if (!window.AudioContext && !window.webkitAudioContext) return;
-        
-        window.bgAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let isPlaying = false;
-        
-        // 简单的俄罗斯方块风格音乐
-        const melody = [
-            { note: 220, duration: 0.2 },  // A3
-            { note: 0, duration: 0.1 },    // pause
-            { note: 262, duration: 0.2 },  // C4
-            { note: 0, duration: 0.1 },
-            { note: 294, duration: 0.2 },  // D4
-            { note: 0, duration: 0.1 },
-            { note: 262, duration: 0.2 },  // C4
-            { note: 0, duration: 0.1 },
-            { note: 220, duration: 0.2 },  // A3
-            { note: 0, duration: 0.1 },
-            { note: 196, duration: 0.4 },  // G3
-            { note: 0, duration: 0.3 },
-            { note: 220, duration: 0.2 },  // A3
-            { note: 0, duration: 0.1 },
-            { note: 262, duration: 0.2 },  // C4
-            { note: 0, duration: 0.1 },
-            { note: 294, duration: 0.2 },  // D4
-            { note: 0, duration: 0.1 },
-            { note: 330, duration: 0.4 },  // E4
-            { note: 0, duration: 0.3 },
-            { note: 294, duration: 0.2 },  // D4
-            { note: 0, duration: 0.1 },
-            { note: 262, duration: 0.2 },  // C4
-            { note: 0, duration: 0.1 },
-            { note: 220, duration: 0.2 },  // A3
-            { note: 0, duration: 0.1 },
-            { note: 196, duration: 0.4 },  // G3
-            { note: 0, duration: 0.5 },
-        ];
+        // 不在页面加载时初始化音乐，只在点击开始时初始化
+    }
 
-        function playNote(frequency, duration, startTime) {
-            if (frequency === 0) return;
-
-            const oscillator = window.bgAudioCtx.createOscillator();
-            const gainNode = window.bgAudioCtx.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(window.bgAudioCtx.destination);
-
-            oscillator.type = 'sine';
-            oscillator.frequency.value = frequency;
-
-            gainNode.gain.setValueAtTime(0.15, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-            oscillator.start(startTime);
-            oscillator.stop(startTime + duration);
+    function playMusic() {
+        if (bgMusic && !isMusicPlaying) {
+            try {
+                bgMusic.play();
+                isMusicPlaying = true;
+            } catch (e) {
+                console.log('播放音乐失败:', e);
+            }
         }
+    }
+
+    function stopMusic() {
+        if (bgMusic && isMusicPlaying) {
+            try {
+                if (bgMusic.pause) {
+                    bgMusic.pause();
+                } else {
+                    bgMusic.stop();
+                }
+                isMusicPlaying = false;
+            } catch (e) {
+                console.log('停止音乐失败:', e);
+            }
+        }
+    }
+
+    // 加载 MIDI 音乐
+    async function loadMidiMusic() {
+        try {
+            const response = await fetch(MUSIC_URL);
+            const arrayBuffer = await response.arrayBuffer();
+            
+            // 使用 Web Audio API 播放 MIDI
+            window.bgAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // 简化的 MIDI 播放 - 循环播放一个简单的旋律
+            const melody = [
+                { note: 220, duration: 0.3 },
+                { note: 0, duration: 0.1 },
+                { note: 262, duration: 0.3 },
+                { note: 0, duration: 0.1 },
+                { note: 294, duration: 0.3 },
+                { note: 0, duration: 0.1 },
+                { note: 262, duration: 0.3 },
+                { note: 0, duration: 0.1 },
+                { note: 220, duration: 0.3 },
+                { note: 0, duration: 0.1 },
+                { note: 196, duration: 0.5 },
+                { note: 0, duration: 0.3 },
+            ];
+
+            let melodyIndex = 0;
+            
+            function playMelody() {
+                if (!isMusicPlaying) return;
+                
+                const note = melody[melodyIndex];
+                if (note.note > 0) {
+                    const oscillator = window.bgAudioCtx.createOscillator();
+                    const gainNode = window.bgAudioCtx.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(window.bgAudioCtx.destination);
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = note.note;
+                    
+                    gainNode.gain.setValueAtTime(0.15, window.bgAudioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, window.bgAudioCtx.currentTime + note.duration);
+                    
+                    oscillator.start(window.bgAudioCtx.currentTime);
+                    oscillator.stop(window.bgAudioCtx.currentTime + note.duration);
+                }
+                
+                melodyIndex = (melodyIndex + 1) % melody.length;
+                setTimeout(playMelody, note.duration * 1000);
+            }
+            
+            bgMusic = {
+                play: function() {
+                    if (window.bgAudioCtx && window.bgAudioCtx.state === 'suspended') {
+                        window.bgAudioCtx.resume();
+                    }
+                    isMusicPlaying = true;
+                    playMelody();
+                },
+                pause: function() {
+                    isMusicPlaying = false;
+                },
+                stop: function() {
+                    isMusicPlaying = false;
+                }
+            };
+        } catch (e) {
+            console.log('加载音乐失败:', e);
+        }
+    }
 
         function playMelody() {
             if (!isPlaying) return;
@@ -164,8 +212,10 @@
         client.on('onError', onError);
 
         // 绑定按钮事件
-        startBtn.addEventListener('click', () => {
-            playMusic();  // 用户点击后播放音乐
+        startBtn.addEventListener('click', async () => {
+            // 加载并播放音乐
+            await loadMidiMusic();
+            playMusic();
             client.startGame();
         });
         stopBtn.addEventListener('click', () => {
@@ -177,10 +227,12 @@
             gameStatus.textContent = '已停止';
             stopMusic();  // 停止音乐
         });
-        restartBtn.addEventListener('click', () => {
+        restartBtn.addEventListener('click', async () => {
             gameOverModal.classList.add('hidden');
-            playMusic();  // 重新开始播放音乐
-            client.startGame();
+            // 加载并播放音乐
+            await loadMidiMusic();
+            playMusic();
+            client.restartGame();
         });
 
         // 尝试连接
@@ -222,6 +274,7 @@
     const prevLinesCleared = [0, 0, 0];
 
     function onGameState(data) {
+        console.log('onGameState called with tick:', data.tick);
         // 更新游戏状态显示
         gameStatus.textContent = '游戏中 (Tick: ' + (data.tick || 0) + ')';
 
@@ -231,29 +284,42 @@
 
         // 渲染每个玩家
         data.players.forEach((player, index) => {
+            console.log('Rendering player', index, 'canvas exists:', !!canvases[index], 'score element:', !!scoreElements[index]);
+
             // 检测是否有行消除（通过 lines_cleared 增加）
             const currentLines = player.lines_cleared || 0;
             if (currentLines > prevLinesCleared[index]) {
-                // 触发闪烁效果（所有行闪烁）
-                renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19]);
-                // 300ms 后清除闪烁
-                setTimeout(() => renderer.clearFlash(), 300);
-                setTimeout(() => renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19]), 350);
-                setTimeout(() => renderer.clearFlash(), 650);
+                // 触发闪烁效果（所有行闪烁2次）
+                // 闪烁4次：亮-暗-亮-暗
+                renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]);
+                // 150ms 后第一次闪烁
+                setTimeout(() => renderer.clearFlash(), 150);
+                setTimeout(() => renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]), 300);
+                setTimeout(() => renderer.clearFlash(), 450);
+                setTimeout(() => renderer.setFlashLines([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]), 600);
+                setTimeout(() => renderer.clearFlash(), 750);
             }
             prevLinesCleared[index] = currentLines;
-            
+
             const canvas = canvases[index];
+            console.log('Canvas for player', index, ':', canvas);
             if (canvas) {
+                console.log('Calling renderer.render for player', index);
                 renderer.render(canvas, player);
+            } else {
+                console.error('Canvas not found for player', index);
             }
 
             // 更新分数
-            renderer.updateScore(scoreElements[index], player.score);
+            if (scoreElements[index]) {
+                renderer.updateScore(scoreElements[index], player.score);
+            }
 
             // 更新状态
             const status = player.status === 'game_over' ? 'dead' : 'alive';
-            renderer.updateStatus(statusElements[index], status);
+            if (statusElements[index]) {
+                renderer.updateStatus(statusElements[index], status);
+            }
         });
     }
 
@@ -279,6 +345,9 @@
         startBtn.disabled = false;
         stopBtn.disabled = true;
         gameStatus.textContent = '游戏结束';
+        
+        // 停止音乐
+        stopMusic();
     }
 
     function onError(error) {

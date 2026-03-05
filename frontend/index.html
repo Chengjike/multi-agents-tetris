@@ -13,6 +13,7 @@
             <div class="controls">
                 <button id="startBtn" class="btn">开始游戏</button>
                 <button id="stopBtn" class="btn" disabled>停止</button>
+                <button id="restartBtn" class="btn">重新开始</button>
             </div>
             <div class="status">
                 <span id="gameStatus">等待开始</span>
@@ -21,7 +22,7 @@
 
         <main class="game-container">
             <div class="player" id="player0">
-                <h2>玩家 0</h2>
+                <h2>Александр</h2>
                 <canvas class="board" width="200" height="400" data-player="0"></canvas>
                 <div class="info">
                     <span>分数: <span class="score">0</span></span>
@@ -30,7 +31,7 @@
             </div>
 
             <div class="player" id="player1">
-                <h2>玩家 1</h2>
+                <h2>Михаил</h2>
                 <canvas class="board" width="200" height="400" data-player="1"></canvas>
                 <div class="info">
                     <span>分数: <span class="score">0</span></span>
@@ -39,7 +40,7 @@
             </div>
 
             <div class="player" id="player2">
-                <h2>玩家 2</h2>
+                <h2>Иван</h2>
                 <canvas class="board" width="200" height="400" data-player="2"></canvas>
                 <div class="info">
                     <span>分数: <span class="score">0</span></span>
@@ -59,8 +60,8 @@
         </div>
     </div>
 
-    <script src="js/http-client.js"></script>
-    <script src="js/game-renderer.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/http-client.js?v=6"></script>
+    <script src="js/game-renderer.js?v=6"></script>
+    <script src="js/main.js?v=6"></script>
 </body>
 </html>

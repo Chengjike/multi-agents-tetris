@@ -29,12 +29,12 @@ class PlayerAction(Enum):
     WAIT = "wait"  # 无操作
 
 
-# 分数配置
+# 分数配置（消除行数 * 100）
 SCORES = {
     1: 100,   # 消除1行
     2: 300,   # 消除2行
-    3: 500,   # 消除3行
-    4: 800,   # 消除4行
+    3: 600,   # 消除3行
+    4: 1000,  # 消除4行
 }
 
 
@@ -77,19 +77,21 @@ class TetrisGame:
         """
         # 将当前方块放置到棋盘
         if self.current_piece:
-            # 尝试放置，如果碰撞则游戏结束
             self.board.place_piece(self.current_piece)
 
-        # 检查是否有游戏结束
-        if self.check_game_over():
+        # 检查棋盘是否已满（游戏结束条件）- 超过90%就算满
+        filled_cells = sum(sum(row) for row in self.board._grid)
+        if filled_cells >= self.board.height * self.board.width * 0.9:
+            print(f"Player {self.player_id}: game over - board is full ({filled_cells} cells)")
             self.status = GameStatus.GAME_OVER
             return False
 
         # 生成新方块
         self._generate_next_piece()
 
-        # 再次检查新方块是否可以直接放置（游戏开始时）
+        # 检查新方块是否可以直接放置（游戏结束条件）
         if self.board.check_collision(self.current_piece):
+            print(f"Player {self.player_id}: game over - new piece collides at start, piece={self.current_piece}")
             self.status = GameStatus.GAME_OVER
             return False
 
@@ -99,6 +101,10 @@ class TetrisGame:
         """检查游戏是否结束"""
         # 检查当前方块是否可以放置
         if self.current_piece and self.board.check_collision(self.current_piece):
+            return True
+        # 检查棋盘是否已满
+        filled_cells = sum(sum(row) for row in self.board._grid)
+        if filled_cells >= self.board.height * self.board.width * 0.9:
             return True
         return False
 
@@ -142,17 +148,23 @@ class TetrisGame:
             piece.y += 1
             if not self.board.check_collision(piece):
                 self.current_piece.y = piece.y
-                self.score += 1  # 软下降得1分
                 return True
 
         elif action == PlayerAction.HARD_DROP:
-            # 硬下降：一直往下直到碰撞
+            # 硬下降：一直往下直到碰撞或超出棋盘
             while not self.board.check_collision(self.current_piece):
                 self.current_piece.y += 1
-                self.score += 2  # 硬下降得2分/格
+                # 防止无限循环
+                if self.current_piece.y > self.board.height + 10:
+                    break
 
             # 回退一格
             self.current_piece.y -= 1
+
+            # 确保方块在有效范围内
+            if self.current_piece.y < 0:
+                self.current_piece.y = 0
+
             # 放置方块并生成新的
             self.spawn_new_piece()
             # 处理消除
@@ -179,9 +191,9 @@ class TetrisGame:
         if not self.board.check_collision(piece):
             self.current_piece.y = piece.y
         else:
-            # 碰撞了，需要放置当前方块并生成新的
-            self.spawn_new_piece()
-            self._process_line_clearing()
+            # 碰撞了，标记方块已落地，等待 AI 执行 HARD_DROP
+            # 不自动生成新方块，让 AI 决定动作
+            pass
 
     def _process_line_clearing(self) -> int:
         """处理行消除
@@ -294,8 +306,12 @@ class TetrisGame:
         elif action == PlayerAction.SOFT_DROP:
             test_piece.y += 1
         elif action == PlayerAction.HARD_DROP:
+            # 硬降：一直往下直到碰撞或超出底部
             while not new_board.check_collision(test_piece):
                 test_piece.y += 1
+                # 防止无限循环（当方块在屏幕上方时）
+                if test_piece.y > new_board.height + 10:
+                    break
             test_piece.y -= 1
 
         # 检查碰撞

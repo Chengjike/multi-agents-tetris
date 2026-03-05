@@ -52,6 +52,7 @@ class GameRenderer {
 
         // 绘制当前方块（带3D效果）
         if (currentPiece && currentPiece.type) {
+            console.log('Drawing piece:', currentPiece.type, 'at', currentPiece.x, currentPiece.y, 'rotation:', currentPiece.rotation);
             const pieceType = currentPiece.type;
             const color = this.colors[pieceType] || '#fff';
             const x = currentPiece.x;
@@ -59,7 +60,9 @@ class GameRenderer {
             const rotation = currentPiece.rotation || 0;
 
             const cells = this._getPieceCells(pieceType, rotation);
+            console.log('Piece cells:', cells);
             cells.forEach(([dx, dy]) => {
+                console.log('Drawing cell at', x + dx, y + dy);
                 this._drawCell3D(ctx, x + dx, y + dy, color);
             });
         }
@@ -70,10 +73,13 @@ class GameRenderer {
 
     // 3D 效果的单元格绘制
     _drawCell3D(ctx, x, y, color) {
+        console.log('_drawCell3D called with x:', x, 'y:', y, 'color:', color, 'cellSize:', this.cellSize);
         const px = x * this.cellSize;
         const py = y * this.cellSize;
         const size = this.cellSize - 1;
-        
+
+        console.log('Drawing at px:', px, 'py:', py, 'size:', size);
+
         // 主体颜色
         ctx.fillStyle = color;
         ctx.fillRect(px, py, size, size);

@@ -11,11 +11,12 @@ from backend.game.piece import Piece
 class RuleAgent:
     """基于规则的俄罗斯方块AI"""
 
-    # 评估权重
-    WEIGHT_HEIGHT = -1.0      # 高度越低越好
-    WEIGHT_HOLES = -5.0       # 空洞越少越好
-    WEIGHT_BUMPINESS = -0.5   # 不平整度越低越好
-    WEIGHT_LINES = 10.0       # 消除行越多越好
+    # 评估权重 - 优化目标：1.尽量多消除 2.尽快消除 3.给对手添麻烦
+    WEIGHT_HEIGHT = -0.5      # 高度越低越好（降低权重）
+    WEIGHT_HOLES = -3.0       # 空洞越少越好
+    WEIGHT_BUMPINESS = -0.3   # 不平整度越低越好（降低权重）
+    WEIGHT_LINES = 100.0      # 消除行越多越好（大幅提高权重）
+    WEIGHT_COMPLETE_LINE = 50.0  # 完成一行（即将满的行）的奖励
 
     def __init__(self, player_id: int):
         self.player_id = player_id
@@ -33,38 +34,58 @@ class RuleAgent:
         if game.current_piece is None:
             return PlayerAction.WAIT
 
-        # 考虑所有可能的动作
-        best_action = PlayerAction.WAIT
-        best_score = float('-inf')
+        # 如果方块还在屏幕上方（y < 0），让它先自然下落
+        if game.current_piece.y < 0:
+            return PlayerAction.SOFT_DROP
 
-        # 尝试所有动作
-        for action in list(PlayerAction):
-            if action == PlayerAction.WAIT:
-                continue
+        # 检查方块是否已经落地（不能再下落）
+        test_piece = game.current_piece.clone()
+        test_piece.y += 1
+        if game.board.check_collision(test_piece):
+            # 方块已经落地，获取最佳位置
+            best_x, best_rotation, _ = self.get_best_position_and_rotation(game)
 
-            # 模拟动作结果
-            new_board, score_change, lines_cleared = TetrisGame.simulate_action(
-                game.board,
-                game.current_piece,
-                action
-            )
+            # 如果当前位置已经是最佳的，直接硬降
+            if (game.current_piece.x == best_x and
+                game.current_piece.rotation == best_rotation):
+                return PlayerAction.HARD_DROP
 
-            # 评估结果
-            eval_score = self._evaluate_board_with_result(
-                new_board,
-                score_change,
-                lines_cleared
-            )
+            # 尝试执行移动或旋转动作
+            if game.current_piece.rotation != best_rotation:
+                # 尝试旋转
+                test_rotated = game.current_piece.clone()
+                test_rotated.rotate()
+                if not game.board.check_collision(test_rotated):
+                    return PlayerAction.ROTATE
 
-            if eval_score > best_score:
-                best_score = eval_score
-                best_action = action
+            if game.current_piece.x < best_x:
+                # 尝试右移
+                test_moved = game.current_piece.clone()
+                test_moved.x += 1
+                if not game.board.check_collision(test_moved):
+                    return PlayerAction.MOVE_RIGHT
 
-        return best_action
+            if game.current_piece.x > best_x:
+                # 尝试左移
+                test_moved = game.current_piece.clone()
+                test_moved.x -= 1
+                if not game.board.check_collision(test_moved):
+                    return PlayerAction.MOVE_LEFT
+
+            # 如果所有移动/旋转都无效，直接硬降尝试
+            return PlayerAction.HARD_DROP
+
+        # 方块在空中，让它下落
+        return PlayerAction.SOFT_DROP
 
     def _evaluate_board(self, board) -> float:
         """
         评估棋盘状态
+
+        优化目标：
+        1. 尽量多消除行（最高优先级）
+        2. 尽快消除行（优先选择能快速消除的落点）
+        3. 给对手添麻烦（通过惩罚系统实现）
 
         Args:
             board: 棋盘
@@ -80,11 +101,24 @@ class RuleAgent:
         total_height = sum(height_map)
         max_height = max(height_map)
 
+        # 复制棋盘来测试消除行（不修改原始棋盘）
+        test_board = board.copy()
+        lines_cleared = test_board.clear_lines()
+
+        # 计算即将完成行数（只差1-2个格子的行）
+        near_complete_lines = 0
+        for y, row in enumerate(board._grid):
+            filled = sum(1 for cell in row if cell != 0)
+            if 8 <= filled <= 9:  # 差1-2个格子就满了
+                near_complete_lines += 1
+
         score = (
             self.WEIGHT_HEIGHT * total_height +
             self.WEIGHT_HOLES * holes +
             self.WEIGHT_BUMPINESS * bumpiness +
-            self.WEIGHT_HEIGHT * max_height * 0.5
+            self.WEIGHT_HEIGHT * max_height * 0.5 +
+            self.WEIGHT_LINES * lines_cleared +
+            self.WEIGHT_COMPLETE_LINE * near_complete_lines
         )
 
         return score

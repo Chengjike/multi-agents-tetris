@@ -65,6 +65,17 @@ class TetrisHTTPClient {
         }
         return await response.json();
     }
+
+    async restartGame() {
+        const response = await fetch(`${this.baseUrl}/api/game/restart`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+        return await response.json();
+    }
     
     async getStatus() {
         const response = await fetch(`${this.baseUrl}/api/game/status`, {
@@ -85,9 +96,11 @@ class TetrisHTTPClient {
         }
         
         this.eventSource = new EventSource(`${this.baseUrl}/api/game/sse`);
-        
+
+        console.log('EventSource created, readyState:', this.eventSource.readyState);
+
         this.eventSource.onopen = () => {
-            console.log('SSE connected');
+            console.log('SSE connected, readyState:', this.eventSource.readyState);
             this.connected = true;
             this.reconnectCount = 0;
             if (this.onConnect) {
@@ -96,6 +109,7 @@ class TetrisHTTPClient {
         };
         
         this.eventSource.onmessage = (event) => {
+            console.log('onmessage triggered, data:', event.data);
             try {
                 const data = JSON.parse(event.data);
                 this._handleMessage(data);
@@ -103,6 +117,22 @@ class TetrisHTTPClient {
                 console.error('Failed to parse SSE message:', e);
             }
         };
+
+        // 处理 game_state 事件（后端使用 event 字段指定事件类型）
+        this.eventSource.addEventListener('game_state', (event) => {
+            try {
+                const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+                this._handleMessage(data);
+            } catch (e) {
+                console.error('Failed to parse game_state event:', e);
+            }
+        });
+
+        // 处理 ping 事件（心跳）
+        this.eventSource.addEventListener('ping', (event) => {
+            // 忽略 ping 消息，或者可以用来更新连接状态
+            // console.log('Ping received');
+        });
         
         this.eventSource.onerror = (error) => {
             console.error('SSE error:', error);
@@ -138,9 +168,11 @@ class TetrisHTTPClient {
     }
     
     _handleMessage(data) {
+        console.log('_handleMessage called with type:', data.type);
         const type = data.type;
-        
+
         if (type === 'game_state') {
+            console.log('Calling onGameState callback');
             if (this.onGameState) {
                 this.onGameState(data);
             }

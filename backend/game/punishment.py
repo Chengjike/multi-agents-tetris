@@ -11,8 +11,6 @@ class PunishmentManager:
 
     def __init__(self, num_players: int = 3):
         self.num_players = num_players
-        # 每个玩家累积的消除行数
-        self._accumulated_lines: Dict[int, int] = {i: 0 for i in range(num_players)}
         # 待执行的惩罚列表
         self._pending_punishments: List[Dict[str, Any]] = []
 
@@ -28,6 +26,9 @@ class PunishmentManager:
             包含是否需要惩罚的信息
         """
         # 累积行数
+        if not hasattr(self, '_accumulated_lines'):
+            self._accumulated_lines = {i: 0 for i in range(self.num_players)}
+        
         self._accumulated_lines[player_id] += lines
 
         result = {
@@ -38,7 +39,7 @@ class PunishmentManager:
             'punished_players': [],
         }
 
-        # 检查是否达到惩罚条件（累积4行）
+        # 检查是否达到惩罚条件（每累积4行）
         if self._accumulated_lines[player_id] >= 4:
             result['should_punish'] = True
             result['punished_players'] = [

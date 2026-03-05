@@ -15,6 +15,11 @@ from backend.protocol.messages import create_game_state, create_game_over
 class GameManager:
     """游戏管理器"""
 
+    # 速度配置：分数越高，tick间隔越短（速度越快）
+    BASE_TICK_INTERVAL = 0.2  # 基础速度：200ms per tick
+    MIN_TICK_INTERVAL = 0.05  # 最快速度：50ms per tick
+    SPEED_INCREASE_SCORE = 10  # 每增加10分，速度提升一次
+
     def __init__(
         self,
         num_players: int = 3,
@@ -60,11 +65,27 @@ class GameManager:
         self.running = False
         self.game_status = GameStatus.PAUSED
 
+    def get_current_tick_interval(self) -> float:
+        """根据最高分数计算当前的 tick 间隔（分数越高速度越快）"""
+        # 获取所有玩家中的最高分数
+        max_score = max(game.score for game in self.games) if self.games else 0
+
+        # 计算速度等级
+        speed_level = max_score // self.SPEED_INCREASE_SCORE
+
+        # 计算当前的 tick 间隔
+        current_interval = self.BASE_TICK_INTERVAL - (speed_level * 0.01)
+
+        # 确保不低于最小间隔
+        return max(current_interval, self.MIN_TICK_INTERVAL)
+
     async def game_loop(self) -> None:
         """游戏主循环"""
         while self.running:
             self.tick()
-            await asyncio.sleep(self.tick_interval)
+            # 使用动态速度
+            current_interval = self.get_current_tick_interval()
+            await asyncio.sleep(current_interval)
 
     def tick(self) -> None:
         """单次游戏tick"""
@@ -78,18 +99,47 @@ class GameManager:
             if game.status == GameStatus.GAME_OVER:
                 continue
 
+            # 先执行方块自动下落
+            game.tick()
+
+            # 检查游戏是否结束
+            if game.status == GameStatus.GAME_OVER:
+                continue
+
+            # 检查棋盘是否已满（游戏结束条件）
+            if game.check_game_over():
+                game.status = GameStatus.GAME_OVER
+                continue
+
+            # 检查自动下落是否导致需要生成新方块
+            if game.current_piece is None:
+                continue
+
+            # 如果自动下落导致碰撞（方块落地），则生成新方块
+            if game.board.check_collision(game.current_piece):
+                result = game.spawn_new_piece()
+                if not result:
+                    # 游戏结束
+                    continue
+                game._process_line_clearing()
+
+            # 检查游戏是否结束
+            if game.status == GameStatus.GAME_OVER:
+                continue
+
             # AI决定动作
             action = agent.decide(game)
 
             # 执行动作
             game.perform_action(action)
 
-            # 检查是否需要生成新方块（硬降后会自动生成）
-            # 软降和移动后检查碰撞
-            if game.current_piece and game.board.check_collision(game.current_piece):
-                # 方块无法移动，需要放置
-                game.spawn_new_piece()
-                game._process_line_clearing()
+            # 注意：spawn_new_piece() 已经在 perform_action() 中处理了
+            # 特别是 HARD_DROP 会自动调用 spawn_new_piece()
+            # 对于其他动作（SOFT_DROP, MOVE_LEFT, MOVE_RIGHT, ROTATE, WAIT），如果碰撞了也需要生成新方块
+            if action != PlayerAction.HARD_DROP:
+                if game.current_piece and game.board.check_collision(game.current_piece):
+                    game.spawn_new_piece()
+                    game._process_line_clearing()
 
             # 记录消除行数
             if game.current_piece is None:

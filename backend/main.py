@@ -14,7 +14,7 @@ import aiohttp
 from aiohttp import web
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
 from sse_starlette.sse import EventSourceResponse
 
 from backend.game.game_manager import GameManager
@@ -55,26 +55,45 @@ async def game_loop_with_sse():
         if _game_manager and _game_manager.running:
             _game_manager.tick()
 
-            # 每10个tick推送一次状态
-            if _game_manager.tick_count % 10 == 0:
-                state = _game_manager.get_broadcast_state()
-                await _sse_queue.put(state)
+            # 每个tick都推送一次状态（更流畅的动画）
+            state = _game_manager.get_broadcast_state()
+            await _sse_queue.put(state)
 
-                # 检查游戏结束
-                if _game_manager.check_all_game_over():
-                    game_over = {
-                        'type': 'game_over',
-                        'winner': _game_manager.get_winner(),
-                        'final_scores': _game_manager.get_final_scores(),
-                    }
-                    await _sse_queue.put(game_over)
-                    logger.info('Game over')
+            # 检查游戏结束
+            if _game_manager.check_all_game_over():
+                game_over = {
+                    'type': 'game_over',
+                    'winner': _game_manager.get_winner(),
+                    'final_scores': _game_manager.get_final_scores(),
+                }
+                await _sse_queue.put(game_over)
+                _game_manager.stop_game()
+                logger.info('Game over')
 
-        await asyncio.sleep(0.1)
+        # 使用动态速度
+        tick_interval = _game_manager.get_current_tick_interval() if _game_manager else 0.1
+        await asyncio.sleep(tick_interval)
 
 
 # FastAPI 应用
 app = FastAPI(title="Multi-Agents Tetris API", lifespan=lifespan)
+
+
+# ========== 静态文件服务 ==========
+
+@app.get("/")
+async def root():
+    """返回前端页面"""
+    import os
+    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend')
+    index_path = os.path.join(frontend_path, 'index.html')
+
+    if os.path.exists(index_path):
+        with open(index_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return HTMLResponse(content)
+
+    return {"message": "Multi-Agents Tetris API", "endpoints": ["/api/game/start", "/api/game/stop", "/api/game/state", "/api/game/sse"]}
 
 
 # ========== REST API 端点 ==========
@@ -100,6 +119,17 @@ async def start_game():
         gm.start_game()
         logger.info('Game started via REST API')
     return gm.get_broadcast_state()
+
+
+@app.post("/api/game/restart")
+async def restart_game():
+    """重新开始游戏"""
+    global _game_manager
+    # 创建新的游戏管理器
+    _game_manager = GameManager(tick_interval=0.1)
+    _game_manager.start_game()
+    logger.info('Game restarted')
+    return _game_manager.get_broadcast_state()
 
 
 @app.post("/api/game/stop")
@@ -173,6 +203,28 @@ async def game_sse(request: Request):
                 break
 
     return EventSourceResponse(event_generator())
+
+
+# ========== 静态文件服务（catch-all）==========
+
+@app.get("/{path:path}")
+async def serve_static(path: str):
+    """服务静态文件"""
+    import os
+
+    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend')
+    file_path = os.path.join(frontend_path, path)
+
+    # 防止路径遍历
+    if '..' in path:
+        return {"error": "Invalid path"}, 404
+
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    # 返回 404
+    from fastapi.responses import Response
+    return Response(status_code=404)
 
 
 # ========== 原有 WebSocket 服务器代码 ==========

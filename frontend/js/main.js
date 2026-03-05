@@ -285,15 +285,19 @@
             const clearedRows = player.last_cleared_rows || [];
 
             if (currentLines > prevLinesCleared[index] && clearedRows.length > 0) {
-                // 只闪烁消除的行
+                // 只闪烁消除的行（闪烁4次：亮-暗-亮-暗-亮-暗-亮-暗）
                 console.log('Player', index, 'cleared rows:', clearedRows);
                 renderer.setFlashLines(clearedRows);
-                // 150ms 后第一次闪烁
-                setTimeout(() => renderer.clearFlash(), 150);
-                setTimeout(() => renderer.setFlashLines(clearedRows), 300);
-                setTimeout(() => renderer.clearFlash(), 450);
-                setTimeout(() => renderer.setFlashLines(clearedRows), 600);
-                setTimeout(() => renderer.clearFlash(), 750);
+                // 闪烁4次，每次200ms
+                setTimeout(() => renderer.clearFlash(), 200);
+                setTimeout(() => renderer.setFlashLines(clearedRows), 400);
+                setTimeout(() => renderer.clearFlash(), 600);
+                setTimeout(() => renderer.setFlashLines(clearedRows), 800);
+                setTimeout(() => renderer.clearFlash(), 1000);
+                setTimeout(() => renderer.setFlashLines(clearedRows), 1200);
+                setTimeout(() => renderer.clearFlash(), 1400);
+                // 1.5秒后清除闪烁效果
+                setTimeout(() => renderer.clearFlash(), 1500);
             }
             prevLinesCleared[index] = currentLines;
 

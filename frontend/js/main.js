@@ -13,7 +13,7 @@
 
     // 游戏组件 - 使用 HTTP + SSE 客户端
     let client = null;
-    let renderer = null;
+    let renderers = [];
     let canvases = [];
     let scoreElements = [];
     let statusElements = [];
@@ -156,9 +156,9 @@
     function init() {
         // 初始化背景音乐
         initMusic();
-        
-        // 创建渲染器
-        renderer = new GameRenderer();
+
+        // 为每个玩家创建独立的渲染器
+        renderers = [new GameRenderer(), new GameRenderer(), new GameRenderer()];
 
         // 获取画布
         document.querySelectorAll('.board').forEach(canvas => {
@@ -254,12 +254,13 @@
 
         // 渲染每个玩家
         data.players.forEach((player, index) => {
+            const renderer = renderers[index];
             console.log('Rendering player', index, 'canvas exists:', !!canvases[index], 'score element:', !!scoreElements[index]);
 
             // 检测是否有行消除（通过 lines_cleared 增加）
             const currentLines = player.lines_cleared || 0;
             const clearedRows = player.last_cleared_rows || [];
-            
+
             if (currentLines > prevLinesCleared[index] && clearedRows.length > 0) {
                 // 只闪烁消除的行
                 console.log('Player', index, 'cleared rows:', clearedRows);

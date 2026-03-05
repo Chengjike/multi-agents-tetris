@@ -59,8 +59,8 @@ class RuleAgent:
             if not game.board.check_collision(test_moved):
                 return PlayerAction.MOVE_LEFT
 
-        # 位置和旋转都到位了，硬降
-        return PlayerAction.HARD_DROP
+        # 位置和旋转都到位了，软降（慢速下落）
+        return PlayerAction.SOFT_DROP
 
     def _evaluate_board(self, board) -> float:
         """

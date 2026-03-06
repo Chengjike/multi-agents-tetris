@@ -3,11 +3,7 @@
 
 测试游戏主循环和管理器
 """
-import pytest
-import asyncio
-from backend.game.tetris import TetrisGame, GameStatus
-from backend.game.punishment import PunishmentManager
-from backend.agents.rule_agent import RuleAgent
+from backend.game.tetris import GameStatus
 from backend.game.game_manager import GameManager
 
 

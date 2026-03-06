@@ -3,7 +3,6 @@
 
 用于测试的简单AI，选择最优落点
 """
-import pytest
 from backend.game.tetris import TetrisGame, PlayerAction
 from backend.game.piece import Piece, PieceType
 from backend.game.board import Board
@@ -35,7 +34,7 @@ class TestRuleAgentDecision:
     def test_agent_considers_all_moves(self):
         """测试Agent考虑所有可能的移动"""
         # 创建一个空棋盘
-        board = Board()
+        Board()
         game = TetrisGame(player_id=0)
         game.start()
 
@@ -54,7 +53,6 @@ class TestRuleAgentScoring:
         agent = RuleAgent(player_id=0)
 
         # 测试评分函数
-        from backend.game.piece import Piece
 
         # 高位置
         piece_high = Piece(PieceType.T, x=3, y=5)
@@ -106,7 +104,7 @@ class TestRuleAgentSimulation:
 
     def test_agent_can_simulate_action(self):
         """测试Agent可以模拟动作"""
-        agent = RuleAgent(player_id=0)
+        RuleAgent(player_id=0)
         game = TetrisGame(player_id=0)
         game.start()
 

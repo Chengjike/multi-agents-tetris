@@ -5,9 +5,6 @@
 """
 import pytest
 import socket
-import subprocess
-import time
-from typing import List, Tuple
 
 
 class TestPortIsolation:
@@ -81,7 +78,6 @@ class TestExistingServiceProtection:
     def test_new_service_uses_different_port(self):
         """测试新服务使用不同端口"""
         # 新服务不应该使用 3000 端口
-        from backend.main import app
 
         # FastAPI 默认不监听 3000
         # 我们只需要确保配置正确
@@ -122,7 +118,7 @@ class TestServiceStartup:
         assert "/api/game/sse" in routes
 
         print(f"✅ 已注册 {len(routes)} 个路由")
-        print(f"   关键端点: /api/game/start, /api/game/stop, /api/game/state, /api/game/sse")
+        print("   关键端点: /api/game/start, /api/game/stop, /api/game/state, /api/game/sse")
 
 
 class TestNoInterference:
@@ -142,7 +138,6 @@ class TestNoInterference:
     def test_no_socket_conflict_on_import(self):
         """测试导入模块不产生 socket 冲突"""
         # 这个测试确保导入后端模块不会立即绑定端口
-        import importlib
         import sys
 
         # 重新加载模块确保没有副作用
@@ -152,8 +147,6 @@ class TestNoInterference:
             del sys.modules['backend.http_client']
 
         # 导入模块
-        from backend.main import app
-        from backend.http_client import TetrisHTTPClient
 
         # 验证没有立即绑定端口
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -182,7 +175,6 @@ class TestDeploymentReadiness:
 
     def test_no_hardcoded_3000_port(self):
         """测试代码中没有硬编码 3000 端口"""
-        import os
 
         # 检查 main.py 不包含 3000 端口
         main_path = '/home/cjk-dev/cjk-workspace/multi-agents-tetris/backend/main.py'

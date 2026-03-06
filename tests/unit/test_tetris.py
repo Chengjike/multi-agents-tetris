@@ -3,7 +3,6 @@
 
 测试单个玩家实例的游戏逻辑
 """
-import pytest
 from backend.game.tetris import TetrisGame, GameStatus, PlayerAction
 
 

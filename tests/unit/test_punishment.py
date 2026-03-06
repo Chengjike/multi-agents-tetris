@@ -3,7 +3,6 @@
 
 核心规则：当任意玩家一次消除4行时，立即在其他两个玩家的板子最底部随机增加一行障碍（留一个缺口）
 """
-import pytest
 from backend.game.punishment import PunishmentManager
 
 

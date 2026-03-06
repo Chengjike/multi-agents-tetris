@@ -122,7 +122,7 @@ class TestReflectionGeneration:
     @pytest.mark.asyncio
     async def test_generate_reflection(self):
         """测试生成反思"""
-        from backend.agents.memory import MemoryManager, Experience
+        from backend.agents.memory import MemoryManager
         
         manager = MemoryManager(player_id=0)
         
@@ -153,7 +153,7 @@ class TestReflectionGeneration:
     @pytest.mark.asyncio
     async def test_generate_reflection_no_api_key(self):
         """测试无 API Key 时生成默认反思"""
-        from backend.agents.memory import MemoryManager, Experience
+        from backend.agents.memory import MemoryManager
         
         manager = MemoryManager(player_id=0)
         
@@ -197,7 +197,7 @@ class TestMemoryIntegration:
         
         # 2. 检索
         with patch.object(manager, '_generate_embedding', return_value=[0.1] * 384):
-            results = await manager.retrieve_similar("Board at row 15", top_k=1)
+            await manager.retrieve_similar("Board at row 15", top_k=1)
         
         # 3. 游戏结束生成反思
         game_summary = {

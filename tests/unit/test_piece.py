@@ -4,7 +4,6 @@
 方块类型：I, J, L, O, S, T, Z（共7种）
 每种方块有4种旋转状态（0, 90, 180, 270度）
 """
-import pytest
 from backend.game.piece import Piece, PieceType
 
 

@@ -3,9 +3,7 @@
 
 测试客户端-服务端消息格式
 """
-import pytest
 from backend.protocol.messages import (
-    ServerMessage,
     ClientMessage,
     GameStateMessage,
     GameOverMessage,

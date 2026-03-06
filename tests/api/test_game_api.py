@@ -4,7 +4,6 @@
 测试 HTTP API 端点
 """
 import pytest
-import asyncio
 from httpx import AsyncClient, ASGITransport
 from backend.main import app
 

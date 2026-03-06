@@ -5,7 +5,7 @@
 """
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
-from backend.agents.qwen_agent import QwenAgent, QwenAPIError
+from backend.agents.qwen_agent import QwenAgent
 
 
 class TestQwenAgentCreation:

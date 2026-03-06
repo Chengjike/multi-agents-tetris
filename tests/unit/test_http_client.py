@@ -4,8 +4,6 @@
 测试前端 HTTP/SSE 客户端
 """
 import pytest
-import json
-from unittest.mock import Mock, patch, AsyncMock
 
 
 class TestHTTPClientInterface:

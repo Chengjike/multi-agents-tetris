@@ -5,8 +5,6 @@
 """
 import pytest
 import asyncio
-import json
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 from backend.main import app
 

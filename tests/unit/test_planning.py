@@ -1,9 +1,7 @@
 """
 测试多步规划与推理模块
 """
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from backend.game.tetris import TetrisGame, PlayerAction
+from backend.game.tetris import PlayerAction
 
 
 class TestChainOfThought:

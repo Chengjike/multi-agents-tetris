@@ -1,7 +1,6 @@
 """
 测试记忆数据结构 Experience
 """
-import pytest
 from dataclasses import asdict
 
 

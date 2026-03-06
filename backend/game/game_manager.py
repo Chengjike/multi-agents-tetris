@@ -141,15 +141,23 @@ class GameManager:
             if game.status == GameStatus.GAME_OVER:
                 continue
 
-            # AI决定动作
-            action = agent.decide(game)
+            # AI决定动作序列
+            actions = agent.decide(game)
 
-            # 执行动作
-            action_result = game.perform_action(action)
+            # 执行动作序列
+            for action in actions:
+                action_result = game.perform_action(action)
 
-            # 如果动作失败（碰撞），生成新方块
-            if not action_result and game.current_piece:
-                game.spawn_new_piece()
+                # 如果动作失败（碰撞），停止执行后续动作
+                if not action_result:
+                    break
+
+                # 如果是硬降，生成了新方块，停止执行后续动作
+                if action == PlayerAction.HARD_DROP:
+                    break
+
+            # 如果当前方块为空（已被硬降处理），检查消除
+            if game.current_piece is None:
                 game._process_line_clearing()
 
             # 记录消除行数（计算当次tick新增的消除行数）

@@ -23,44 +23,73 @@ class RuleAgent:
     def __init__(self, player_id: int):
         self.player_id = player_id
 
-    def decide(self, game: TetrisGame) -> PlayerAction:
+    def decide(self, game: TetrisGame) -> list:
         """
-        决定最佳动作
+        决定最佳动作序列
 
         Args:
             game: 当前游戏实例
 
         Returns:
-            最佳动作
+            最佳动作列表
         """
         if game.current_piece is None:
-            return PlayerAction.WAIT
+            return [PlayerAction.WAIT]
 
         # 获取最佳落点位置
         best_x, best_rotation, _ = self.get_best_position_and_rotation(game)
 
-        # 优先旋转到最佳角度
-        if game.current_piece.rotation != best_rotation:
+        actions = []
+
+        # 优先旋转到最佳角度（可能需要多次旋转）
+        current_rot = game.current_piece.rotation
+        while current_rot != best_rotation:
             test_rotated = game.current_piece.clone()
-            test_rotated.rotate()
+            # 计算需要旋转多少次
+            rot_diff = (best_rotation - current_rot) % 4
+            for _ in range(rot_diff):
+                test_rotated.rotate()
             if not game.board.check_collision(test_rotated):
-                return PlayerAction.ROTATE
+                # 可以一次旋转到位
+                for _ in range(rot_diff):
+                    actions.append(PlayerAction.ROTATE)
+                current_rot = best_rotation
+                break
+            else:
+                # 尝试一次旋转一级
+                test_rotated = game.current_piece.clone()
+                test_rotated.rotate()
+                if not game.board.check_collision(test_rotated):
+                    actions.append(PlayerAction.ROTATE)
+                    current_rot = (current_rot + 1) % 4
+                else:
+                    break
 
         # 然后移动到最佳位置
-        if game.current_piece.x < best_x:
+        while game.current_piece.x < best_x:
             test_moved = game.current_piece.clone()
             test_moved.x += 1
             if not game.board.check_collision(test_moved):
-                return PlayerAction.MOVE_RIGHT
+                actions.append(PlayerAction.MOVE_RIGHT)
+            else:
+                break
 
-        if game.current_piece.x > best_x:
+        while game.current_piece.x > best_x:
             test_moved = game.current_piece.clone()
             test_moved.x -= 1
             if not game.board.check_collision(test_moved):
-                return PlayerAction.MOVE_LEFT
+                actions.append(PlayerAction.MOVE_LEFT)
+            else:
+                break
 
-        # 位置和旋转都到位了，软降（慢速下落）
-        return PlayerAction.SOFT_DROP
+        # 位置和旋转都到位了，硬降到底
+        if actions:  # 如果有未完成的动作，继续执行
+            actions.append(PlayerAction.HARD_DROP)
+        else:
+            # 没有任何动作需要做，直接硬降
+            actions.append(PlayerAction.HARD_DROP)
+
+        return actions
 
     def _evaluate_board(self, board) -> float:
         """
@@ -157,7 +186,7 @@ class RuleAgent:
         game: TetrisGame
     ) -> tuple:
         """
-        获取最佳位置和旋转
+        获取最佳位置和旋转（考虑当前方块和下一个方块的组合）
 
         Args:
             game: 当前游戏实例
@@ -167,6 +196,10 @@ class RuleAgent:
         """
         if game.current_piece is None:
             return (3, 0, PlayerAction.WAIT)
+
+        # 获取下一个方块
+        next_piece = game.next_piece
+        use_lookahead = next_piece is not None
 
         best_x = game.current_piece.x
         best_rotation = game.current_piece.rotation
@@ -180,7 +213,7 @@ class RuleAgent:
 
             # 先让方块落到底部，再检查碰撞
             bottom_piece = game.get_piece_at_bottom(test_piece)
-            
+
             # 检查底部位置是否碰撞
             if game.board.check_collision(bottom_piece):
                 continue
@@ -193,11 +226,18 @@ class RuleAgent:
                 if game.board.check_collision(bottom_piece):
                     continue
 
-                # 临时放置方块
+                # 临时放置当前方块
                 game.board.place_piece(bottom_piece)
 
-                # 评估
+                # 评估当前方块
                 score = self._evaluate_board(game.board)
+
+                # 如果有下一个方块，评估组合效果
+                if use_lookahead:
+                    # 模拟下一个方块的最佳落点
+                    next_score = self._evaluate_next_piece(game.board, next_piece)
+                    # 组合分数：当前方块分数 + 下一个方块分数 * 权重
+                    score = score + next_score * 0.5
 
                 # 移除临时方块
                 for cx, cy in bottom_piece.get_cells():
@@ -220,3 +260,65 @@ class RuleAgent:
             best_action = PlayerAction.HARD_DROP
 
         return (best_x, best_rotation, best_action)
+
+    def _evaluate_next_piece(self, board, next_piece: Piece) -> float:
+        """
+        评估下一个方块在给定棋盘上的最佳落点得分
+
+        Args:
+            board: 放置当前方块后的棋盘
+            next_piece: 下一个方块
+
+        Returns:
+            最佳落点的评估分数
+        """
+        if next_piece is None:
+            return 0.0
+
+        best_score = float('-inf')
+
+        # 尝试下一个方块的所有旋转状态
+        for rotation in range(4):
+            test_piece = next_piece.clone()
+            test_piece.rotation = rotation
+
+            # 尝试所有x位置
+            for x in range(-2, board.width + 2):
+                test_piece.x = x
+                bottom_piece = self._get_piece_at_bottom(board, test_piece)
+
+                if board.check_collision(bottom_piece):
+                    continue
+
+                # 临时放置下一个方块
+                board.place_piece(bottom_piece)
+
+                # 评估
+                score = self._evaluate_board(board)
+
+                # 移除临时方块
+                for cx, cy in bottom_piece.get_cells():
+                    if 0 <= cy < board.height:
+                        board.set_cell(cx, cy, 0)
+
+                if score > best_score:
+                    best_score = score
+
+        return best_score if best_score != float('-inf') else 0.0
+
+    def _get_piece_at_bottom(self, board, piece: Piece) -> Piece:
+        """
+        获取方块在给定棋盘上下落到底部时的位置
+
+        Args:
+            board: 棋盘
+            piece: 方块
+
+        Returns:
+            落在底部后的方块副本
+        """
+        result = piece.clone()
+        while not board.check_collision(result):
+            result.y += 1
+        result.y -= 1
+        return result

@@ -85,7 +85,7 @@ class PunishmentManager:
             games: 游戏实例列表
         """
         for punishment in self._pending_punishments:
-            from_player = punishment['from_player']
+            punishment['from_player']
             times = punishment['times']
 
             for player_id in punishment['punished_players']:

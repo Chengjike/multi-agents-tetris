@@ -5,7 +5,7 @@
 """
 import copy
 import random
-from typing import List, Optional
+from typing import List
 
 from backend.game.piece import Piece
 

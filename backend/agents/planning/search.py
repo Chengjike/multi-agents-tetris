@@ -3,7 +3,6 @@
 
 使用树搜索找到最佳动作
 """
-from typing import Optional
 from backend.game.board import Board
 from backend.game.tetris import PlayerAction
 from backend.agents.planning.tree_search import SearchTree, SearchNode, expand_actions

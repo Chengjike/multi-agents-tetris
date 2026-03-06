@@ -3,11 +3,7 @@
 
 使用 ChromaDB 作为向量数据库，sentence-transformers 作为嵌入模型
 """
-import os
-import json
-import asyncio
 from typing import List, Optional, Dict, Any
-from dataclasses import asdict
 
 import aiohttp
 from backend.agents.memory.experience import Experience

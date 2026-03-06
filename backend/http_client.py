@@ -5,7 +5,7 @@ HTTP + SSE 客户端
 """
 import json
 import asyncio
-from typing import Optional, Callable, Any, Dict
+from typing import Optional, Callable, Dict
 import aiohttp
 
 
@@ -184,10 +184,6 @@ class TetrisHTTPClient:
     def connect(self):
         """连接 SSE（兼容 WebSocket API）"""
         self.connect_sse()
-
-    def disconnect(self):
-        """断开连接（兼容 WebSocket API）"""
-        self.disconnect_sse()
 
 
 # 导出

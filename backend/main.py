@@ -13,8 +13,8 @@ from contextlib import asynccontextmanager
 import aiohttp
 from aiohttp import web
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, FileResponse
 from sse_starlette.sse import EventSourceResponse
 
 from backend.game.game_manager import GameManager

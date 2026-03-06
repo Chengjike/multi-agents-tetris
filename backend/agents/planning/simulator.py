@@ -78,10 +78,10 @@ def _simulate_drop(
     # 模拟下落并检查是否消除行
     if soft:
         # 软下降下降较少行
-        drop_rows = random.randint(1, 3)
+        random.randint(1, 3)
     else:
         # 硬下降直接到底
-        drop_rows = 10
+        pass
     
     # 简化：随机产生消除
     lines_cleared = 0

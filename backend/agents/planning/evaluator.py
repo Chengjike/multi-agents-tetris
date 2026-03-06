@@ -3,7 +3,7 @@
 
 评估游戏状态的优劣
 """
-from typing import List, Tuple
+from typing import List
 
 
 def evaluate_state(board: List[List[str]]) -> float:
@@ -24,8 +24,8 @@ def evaluate_state(board: List[List[str]]) -> float:
     if not board:
         return 0.0
     
-    rows = len(board)
-    cols = len(board[0]) if board else 0
+    len(board)
+    len(board[0]) if board else 0
     
     # 1. 计算棋盘高度分数（高度越低越好）
     height_score = _evaluate_height(board)

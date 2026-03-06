@@ -3,7 +3,7 @@
 
 管理 Agent 之间的消息传递
 """
-from typing import List, Dict, Optional
+from typing import List, Dict
 from collections import defaultdict
 from backend.agents.communication.message import Message
 

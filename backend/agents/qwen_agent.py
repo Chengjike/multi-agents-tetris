@@ -12,7 +12,7 @@ import aiohttp
 from backend.game.tetris import TetrisGame, PlayerAction
 from backend.agents.rule_agent import RuleAgent
 from backend.agents.memory import MemoryManager, Experience
-from backend.agents.planning import build_cot_prompt, find_best_action
+from backend.agents.planning import build_cot_prompt
 from backend.agents.communication import MessageChannel, Message, MessageType
 
 
@@ -158,12 +158,11 @@ class QwenAgent:
         # 检索相似经验
         import asyncio
         try:
-            loop = asyncio.get_event_loop()
+            asyncio.get_event_loop()
         except RuntimeError:
-            loop = asyncio.new_event_loop()
+            asyncio.new_event_loop()
         
         # 简单的状态描述
-        state_desc = f"得分{game.score}, 当前方块{game.current_piece.type.value if game.current_piece else '?'}"
         
         # 注意：这里需要 async 调用，在 decide 中处理
         return "\n[历史经验将在这里显示]\n"
@@ -273,7 +272,7 @@ class QwenAgent:
                 return self.fallback_agent.decide(game)
 
             action_str = result.get('action', 'wait')
-            reasoning = result.get('reasoning', '')
+            result.get('reasoning', '')
 
             # 记录对话历史（限制长度）
             self.conversation_history.append({"role": "user", "content": prompt})
@@ -286,7 +285,7 @@ class QwenAgent:
             action = self.ACTION_MAP.get(action_str, PlayerAction.WAIT)
             return action
 
-        except Exception as e:
+        except Exception:
             # 出错时使用 fallback
             return self.fallback_agent.decide(game)
 

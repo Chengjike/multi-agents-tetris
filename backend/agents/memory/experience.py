@@ -3,7 +3,7 @@
 
 存储 Agent 的游戏经历，包含状态描述、动作、结果和反思
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
 

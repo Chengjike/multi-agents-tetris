@@ -120,7 +120,7 @@ class TestBoardClearLines:
         board = Board()
         board.set_cell(5, 19, 1)  # 只有部分格子有方块
         lines_cleared = board.clear_lines()
-        assert lines_cleared == 0
+        assert lines_cleared == []  # 没有行需要消除时返回空列表
 
     def test_clear_one_line(self):
         """测试消除一行"""
@@ -130,7 +130,7 @@ class TestBoardClearLines:
             board.set_cell(x, 19, 1)
 
         lines_cleared = board.clear_lines()
-        assert lines_cleared == 1
+        assert lines_cleared == [19]  # 返回消除的行号列表
 
         # 检查第19行是否为空
         for x in range(board.width):
@@ -145,7 +145,7 @@ class TestBoardClearLines:
             board.set_cell(x, 19, 1)
 
         lines_cleared = board.clear_lines()
-        assert lines_cleared == 2
+        assert lines_cleared == [18, 19]  # 返回消除的行号列表
 
     def test_clear_non_consecutive_lines(self):
         """测试消除不连续的行（所有满行都会被消除）"""
@@ -156,8 +156,8 @@ class TestBoardClearLines:
             board.set_cell(x, 19, 1)
 
         lines_cleared = board.clear_lines()
-        # 所有满行都应该被消除
-        assert lines_cleared == 2
+        # 所有满行都应该被消除，返回行号列表
+        assert lines_cleared == [17, 19]
 
 
 class TestBoardAddBottomRow:

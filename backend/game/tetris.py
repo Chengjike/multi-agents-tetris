@@ -3,12 +3,11 @@
 
 单个玩家实例的游戏逻辑
 """
-import random
 from enum import Enum
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from backend.game.board import Board
-from backend.game.piece import Piece, PieceType
+from backend.game.piece import Piece
 
 
 class GameStatus(Enum):

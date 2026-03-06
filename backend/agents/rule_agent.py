@@ -3,7 +3,6 @@
 
 使用评估函数选择最优落点
 """
-from typing import Optional
 from backend.game.tetris import TetrisGame, PlayerAction
 from backend.game.piece import Piece
 

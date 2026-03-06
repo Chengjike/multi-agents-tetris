@@ -9,7 +9,7 @@ from backend.game.tetris import TetrisGame, GameStatus, PlayerAction
 from backend.game.punishment import PunishmentManager
 from backend.agents.rule_agent import RuleAgent
 from backend.agents.communication import MessageChannel, Message
-from backend.protocol.messages import create_game_state, create_game_over
+from backend.protocol.messages import create_game_state
 
 
 class GameManager:
